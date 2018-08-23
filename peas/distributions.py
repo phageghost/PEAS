@@ -3,7 +3,8 @@ import scipy.stats
 from empdist import EmpiricalDistribution
 from scipy.signal import convolve
 
-from .utilities import log_print, resample_array
+from peas.arrayfuncs import resample_array
+from .utilities import log_print
 
 
 def generate_empirical_distributions_region_means(data,

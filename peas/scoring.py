@@ -1,6 +1,6 @@
 import numpy
 
-from .utilities import my_diag_indices, truncate_array_tuple
+from peas.arrayfuncs import my_diag_indices, truncate_array_tuple
 
 
 def compute_mean_table_2d(data, start_diagonal=1, end_diagonal=0):
