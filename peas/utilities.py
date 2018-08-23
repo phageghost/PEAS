@@ -1,5 +1,23 @@
+import datetime
+
 import numpy
 import scipy.stats
+
+
+def pretty_now():
+    """
+    Returns the current date/time in a nicely formatted string (without so many decimal places)
+    """
+    return datetime.datetime.strftime(datetime.datetime.now(), '%Y-%b-%d %H:%M:%S')
+
+
+def log_print(message, tabs=1):
+    print('{}{}{}'.format(pretty_now(), '\t' * tabs, message))
+
+
+def validate_param(param_name, value_received, allowable_values):
+    assert value_received in allowable_values, 'Received invalid value \'{}\' for parameter {}. Allowable values: {}'.format(
+        value_received, param_name, ', '.join(allowable_values))
 
 
 def my_diag_indices(n, k=0):
@@ -15,7 +33,6 @@ def my_diag_indices(n, k=0):
     else:
         x_coords = numpy.arange(0, n - k)
         y_coords = numpy.arange(k, n)
-
 
     return (x_coords, y_coords)
 
@@ -40,6 +57,31 @@ def clean_array(arr):
     Returns a copy of :param:`arr` with all inf, neginf and NaN values removed
     """
     return arr[numpy.nonzero(~(numpy.isnan(arr) | numpy.isinf(arr) | numpy.isneginf(arr)))[0]]
+
+
+def replace_nans_diagonal_means(matrix, start_diagonal=0, end_diagonal=0):
+    """
+    Returns a copy of :param:`matrix` where all NaN values are replaced
+    by the mean of that cell's diagonal vector (computed without NaNs).
+
+    Requires that no diagonals consist only of NaNs (run trim_matrix_edges first)
+    """
+    assert matrix.shape[0] == matrix.shape[1]
+    n = matrix.shape[0]
+    if end_diagonal == 0:
+        end_diagonal = n - 1
+        start_diagonal = -end_diagonal
+
+    filled_matrix = matrix.copy()
+    for diag_idx in range(start_diagonal, end_diagonal):
+        diag_indices = my_diag_indices(n, diag_idx)
+        diag_vector = matrix[diag_indices]
+        bad_locs = numpy.isnan(diag_vector)
+        good_locs = numpy.logical_not(bad_locs)
+        diag_mean = diag_vector[good_locs].mean()
+        diag_vector[bad_locs] = diag_mean
+        filled_matrix[diag_indices] = diag_vector
+    return filled_matrix
 
 
 def resample_array(arr, new_size, support):

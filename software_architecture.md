@@ -1,6 +1,6 @@
+## ROPE: Region of proximal enrichment
 
-
-Modules:
+# Modules:
 	1. Different front-ends for different types of data. Currently just implement one for peaks (include BED and HOMER format).
 		1. Split up tag counts and annotations.
 		2. Pre-process tag counts, normalize, etc.
@@ -43,4 +43,8 @@ Modules:
 		
 		
 	5. Plotting functions:
+	
+	6. Command line scripts
+	    1. For peak data (BED files)
+	    2. For a single CSV vector or matrix (command line flag for 1D or 2D).
 		

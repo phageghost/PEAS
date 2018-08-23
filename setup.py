@@ -20,7 +20,7 @@ setuptools.setup(name='PEAS',
                  author_email='peas@phageghost.net',
                  license='MIT',
                  packages=['peas'],
-                 install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'seaborn'],
+                 install_requires=['numpy', 'datetime', 'scipy', 'pandas', 'matplotlib', 'seaborn', 'empdist'],
                  zip_safe=False,
                  classifiers=(
                      "Programming Language :: Python :: 3",
