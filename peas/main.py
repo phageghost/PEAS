@@ -1,10 +1,10 @@
 import numpy
 
+from peas import distributions
+from peas import scoring
 from peas.arrayfuncs import replace_nans_diagonal_means, compute_vector_trim_points, compute_matrix_trim_points, \
     create_diagonal_distance_matrix, create_data_masks
-from . import distributions
-from . import scoring
-from .utilities import log_print, gaussian_norm
+from peas.utilities import log_print, gaussian_norm
 
 DEFAULT_PVALUE_TARGET = 1e-6
 MAX_PSCORE = 744.44007192138122
@@ -73,7 +73,7 @@ def find_ropes_matrix(input_matrix, min_score=0, max_pval=None, min_size=2, max_
 
     region_scores, empirical_distro = generate_score_distributions_matrix(input_matrix=input_matrix)
     pval_scores = compute_pscores(region_scores=region_scores, empirical_distros=empirical_distro)
-    row_masks, col_masks = filter_scores(pval_scores=pval_scores)
+    row_masks, col_masks = filter_candidate_regions(pval_scores=pval_scores)
 
 
 def trim_data_vector(input_vector):
@@ -193,7 +193,7 @@ def compute_pscores(region_scores, empirical_distros):
     return pval_scores
 
 
-def filter_scores(region_scores, pval_scores, min_size, max_size, min_score, max_pval):
+def filter_candidate_regions(region_scores, pval_scores, min_size, max_size, min_score, max_pval):
     # Apply filters to generate masks
 
     log_print('applying filters ...', 2)

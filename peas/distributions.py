@@ -1,3 +1,5 @@
+import datetime
+
 import numpy
 import scipy.stats
 from empdist import EmpiricalDistribution
@@ -58,8 +60,7 @@ def generate_empirical_distributions_region_means(data,
 
     if max_region_size > max_empirical_size:
         for region_size in range(max(2, max_empirical_size), max_region_size + 1):
-            new_pdf = scipy.stats.norm(loc=data_mean, scale=numpy.sqrt(data_va
-            r * region_size ) / region_size)
+            new_pdf = scipy.stats.norm(loc=data_mean, scale=numpy.sqrt(data_var * region_size) / region_size)
             empirical_distros_by_region_size[region_size] = new_pdf
 
     return empirical_distros_by_region_size
