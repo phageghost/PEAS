@@ -52,6 +52,20 @@ def truncate_array_tuple(array_tuple, prefix_trim, suffix_trim):
     return array_tuple
 
 
+def resample_array(arr, new_size, support):
+    """
+    Return an interpolated copy of size :param new_size: of :param arr: with size given
+    as the span of :param support:.
+    :param arr:
+    :param new_size:
+    :param support:
+    :return:
+    """
+    resampled = numpy.interp(x=numpy.linspace(*support, new_size), xp=numpy.linspace(*support, len(arr)), fp=arr)
+    resampled /= resampled.sum()
+    return resampled
+
+
 def clean_array(arr):
     """
     Returns a copy of :param:`arr` with all inf, neginf and NaN values removed
@@ -84,12 +98,44 @@ def replace_nans_diagonal_means(matrix, start_diagonal=0, end_diagonal=0):
     return filled_matrix
 
 
-def resample_array(arr, new_size, support):
+def compute_matrix_trim_points(x):
     """
+    Returns a 4-tuple for the following coordinates needed to trim :param:`x`
+    so that all edge rows and columns that contain no valid entries are removed.
     """
-    resampled = numpy.interp(x=numpy.linspace(*support, new_size), xp=numpy.linspace(*support, len(arr)), fp=arr)
-    resampled /= resampled.sum()
-    return resampled
+    # rows
+    nan_rows = (numpy.isnan(x).sum(axis=1) == x.shape[0]).astype(int)
+    row_transitions = numpy.diff(nan_rows)
+
+    row_candidate_start_trim_points = numpy.nonzero(row_transitions < 0)[0]
+    if nan_rows[0] == 1 and len(row_candidate_start_trim_points) > 0:
+        row_start_trim_point = row_candidate_start_trim_points[0] + 1
+    else:
+        row_start_trim_point = 0
+
+    row_candidate_end_trim_points = numpy.nonzero(row_transitions > 0)[0]
+    if nan_rows[-1] == 1 and len(row_candidate_end_trim_points) > 0:
+        row_end_trim_point = row_candidate_end_trim_points[-1]
+    else:
+        row_end_trim_point = x.shape[0]
+
+    # cols
+    nan_cols = (numpy.isnan(x).sum(axis=0) == x.shape[1]).astype(int)
+    col_transitions = numpy.diff(nan_cols)
+
+    col_candidate_start_trim_points = numpy.nonzero(col_transitions < 0)[0]
+    if nan_cols[0] == 1 and len(col_candidate_start_trim_points) > 0:
+        col_start_trim_point = col_candidate_start_trim_points[0] + 1
+    else:
+        col_start_trim_point = 0
+
+    col_candidate_end_trim_points = numpy.nonzero(col_transitions > 0)[0]
+    if nan_cols[-1] == 1 and len(col_candidate_end_trim_points) > 0:
+        col_end_trim_point = col_candidate_end_trim_points[-1] + 1
+    else:
+        col_end_trim_point = x.shape[1]
+
+    return row_start_trim_point, row_end_trim_point, col_start_trim_point, col_end_trim_point
 
 
 def gaussian_kernel(sd, sd_cutoff=3, normalize=False):
@@ -114,3 +160,34 @@ def gaussian_kernel(sd, sd_cutoff=3, normalize=False):
     if normalize:
         kern = kern / kern.max()
     return kern
+
+
+def quantiles(data):
+    """
+    Returns a pandas Series of the quantiles of data in <data>. Quantiles start at 1 / (len(data) + 1) and
+    end at len(data) / (len(data) + 1) to avoid singularities at the 0 and 1 quantiles.
+    to prevent
+    :param data:
+    :return:
+    """
+    sort_indices = numpy.argsort(data)
+    quants = pandas.Series(numpy.zeros(len(data)))
+    try:
+        quants.index = data.index
+    except AttributeError:
+        pass
+    quants[sort_indices] = (numpy.arange(len(data)) + 1) / float(len(data) + 1)
+    return quants
+
+
+def gaussian_norm(arr):
+    """
+    Quantile normalizes the given array to a standard Gaussian distribution
+    :param data:
+    :return:
+    """
+    quants = numpy.array(quantiles(arr))
+    std_normal = scipy.stats.norm(loc=0, scale=1)
+    normed = std_normal.ppf(quants)
+
+    return normed
