@@ -1,26 +1,26 @@
 import setuptools
 
-VER = '0.3.1'
+VER = '0.0.1'
 AUTHOR = 'Dylan Skola'
 
 print('*' * 80)
-print('* {:<76} *'.format('python-genome-browser version {} by {}'.format(VER, AUTHOR)))
+print('* {:<76} *'.format('PEAS {} by {}'.format(VER, AUTHOR)))
 print('*' * 80)
 print()
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-setuptools.setup(name='pygbrowse',
+setuptools.setup(name='PEAS',
                  version=VER,
-                 description='Tools for making plots of genomic datasets in a genome-browser-like format ',
+                 description=' Proximal Enrichment By Approximated Sampling  ',
                  long_description=long_description,
-                 url='https://github.com/phageghost/python-genome-browser',
-                 author='phageghost',
-                 author_email='pygbrowse@phageghost.net',
+                 url='https://github.com/phageghost/PEAS',
+                 author=AUTHOR,
+                 author_email='peas@phageghost.net',
                  license='MIT',
-                 packages=['pygbrowse'],
-                 install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'seaborn', 'pysam', 'intervaltree'],
+                 packages=['peas'],
+                 install_requires=['numpy', 'scipy', 'pandas', 'matplotlib', 'seaborn'],
                  zip_safe=False,
                  classifiers=(
                      "Programming Language :: Python :: 3",
