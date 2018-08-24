@@ -5,13 +5,16 @@ import scipy.stats
 from empdist import EmpiricalDistribution
 from scipy.signal import convolve
 
-from peas.arrayfuncs import resample_array
-from .utilities import log_print
+from peas.arrayfuncs import resample_array, my_diag_indices
+from peas.utilities import log_print
+
+DEFAULT_MAX_EMPIRICAL_SIZE = 50
+SAVGOL_DEFAULT_WINDOW_SIZE = 5
 
 
 def generate_empirical_distributions_region_means(data,
                                                   max_region_size,
-                                                  num_bins=DEFAULT_BINS,
+                                                  bins='auto',
                                                   max_empirical_size=DEFAULT_MAX_EMPIRICAL_SIZE,
                                                   support=None,
                                                   resample=False,
@@ -42,7 +45,7 @@ def generate_empirical_distributions_region_means(data,
     if max_empirical_size < 1:
         pdfs = [scipy.stats.norm(loc=data_mean, scale=numpy.sqrt(data_var))]
     else:
-        singleton_pdf = EmpiricalDistribution.from_data(data, num_bins=num_bins, pseudocount=pseudocount,
+        singleton_pdf = EmpiricalDistribution.from_data(data, bins=bins, pseudocount=pseudocount,
                                                         support=support)
         new_frequencies = singleton_pdf.frequencies
         pdfs = [singleton_pdf]
