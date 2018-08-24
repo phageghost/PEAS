@@ -12,6 +12,54 @@ DEFAULT_MAX_EMPIRICAL_SIZE = 50
 SAVGOL_DEFAULT_WINDOW_SIZE = 5
 
 
+def predict_distributions_independent_sums(input_empirical_distribution,
+                                           max_sample_size):
+    """
+    Given a population sample, return a list of frozen empirical distribution
+    objects representing the inferred distributions of the sum of samples taken from
+    that population of sizes [1, :param:`max_sample_size`].
+
+    Returns a dictionary, keyed by region size, of EmpiricalDistribution objects.
+    """
+    assert max_sample_size >= 1
+
+    empirical_distros_by_region_size = {1: input_empirical_distribution}
+
+    for sample_size in range(2, max_sample_size + 1):
+        empirical_distros_by_region_size[sample_size] = empirical_distros_by_region_size[
+                                                            sample_size - 1] + input_empirical_distribution
+
+    return empirical_distros_by_region_size
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 def generate_empirical_distributions_region_means(data,
                                                   max_region_size,
                                                   bins='auto',
