@@ -15,9 +15,6 @@ SAVGOL_DEFAULT_WINDOW_SIZE = 5
 def generate_empirical_distributions_region_means(data,
                                                   max_region_size,
                                                   bins='auto',
-                                                  max_empirical_size=DEFAULT_MAX_EMPIRICAL_SIZE,
-                                                  support=None,
-                                                  resample=False,
                                                   pseudocount=0):
     """
     Given a population sample, return a list of frozen empirical distribution
