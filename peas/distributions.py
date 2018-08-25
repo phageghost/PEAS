@@ -32,6 +32,23 @@ def predict_distributions_independent_sums(input_empirical_distribution,
     return empirical_distros_by_region_size
 
 
+# For vector, where permuted region means are indepdendent
+def predict_distributions_indepdendent_means(input_empirical_distribution,
+                                             max_sample_size):
+    """
+    Given a population sample, return a list of frozen empirical distribution
+    objects representing the inferred distributions of the sum of samples taken from
+    that population of sizes [1, :param:`max_sample_size`].
+
+    Returns a dictionary, keyed by region size, of EmpiricalDistribution objects.
+    """
+    assert max_sample_size >= 1
+
+    sum_distributions = predict_distributions_indepdendent_sums(
+        input_empirical_distribution=input_empirical_distribution, max_sample_size=max_sample_size)
+
+    return {sample_size: distribution / sample_size for sample_size, distribution in sum_distributions.items()}
+
 
 
 
