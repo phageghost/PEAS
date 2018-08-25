@@ -54,6 +54,22 @@ def clean_array(arr):
     return arr[numpy.nonzero(~(numpy.isnan(arr) | numpy.isinf(arr) | numpy.isneginf(arr)))[0]]
 
 
+def shuffle_matrix(matrix):
+    """
+    Returns a srandomly huffled copy of 2D array :param matrix: that preserves row and column affiliations
+
+    :param matrix:
+    :return:
+    """
+    assert matrix.shape[0] == matrix.shape[1]
+    n = matrix.shape[0]
+
+    shuff_indices = numpy.arange(n)
+    numpy.random.shuffle(shuff_indices)
+
+    return matrix[shuff_indices][:, shuff_indices]
+
+
 def replace_nans_diagonal_means(matrix, start_diagonal=0, end_diagonal=0):
     """
     Returns a copy of :param:`matrix` where all NaN values are replaced

@@ -75,3 +75,14 @@ def gaussian_norm(arr):
 
     return normed
 
+
+def force_odd(num):
+    if num % 2 == 0:
+        num += 1
+    return num
+
+
+def force_even(num):
+    if num % 2 == 1:
+        num += 1
+    return num

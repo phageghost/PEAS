@@ -1,9 +1,9 @@
 import numpy
 
-from peas import distributions
 from peas import scoring
 from peas.arrayfuncs import replace_nans_diagonal_means, compute_vector_trim_points, compute_matrix_trim_points, \
     create_diagonal_distance_matrix, create_data_masks
+from peas.fitapproxdistros import distributions
 from peas.utilities import log_print, gaussian_norm
 
 DEFAULT_PVALUE_TARGET = 1e-6
@@ -175,7 +175,7 @@ def generate_score_distributions_matrix(input_matrix, min_score, max_pval, min_s
 def compute_pscores(region_scores, empirical_distros):
     log_print('computing -log pvalues ...', 2)
 
-    if len(input_data.shape) == 1:  # ToDo: Do logsf with flexible tails to avoid this hackiness
+    if len(region_scores.shape) == 1:  # ToDo: Do logsf with flexible tails to avoid this hackiness
         region_pvals = simstraps.compute_pvalues_matrix(data_matrix=region_scores,
                                                         distro_dict=empirical_distros,
                                                         diagonal_start=min_size - 1,

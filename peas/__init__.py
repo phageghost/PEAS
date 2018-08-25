@@ -1,3 +1,4 @@
 from . import arrayfuncs
-from . import distributions
+from . import choosing
+# from . import distributions
 from . import scoring

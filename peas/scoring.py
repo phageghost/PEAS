@@ -1,6 +1,13 @@
+import datetime
+
 import numpy
 
-from peas.arrayfuncs import my_diag_indices, truncate_array_tuple
+import peas.fitapproxdistros.distributions
+from peas.arrayfuncs import my_diag_indices, truncate_array_tuple, shuffle_matrix
+from peas.fitapproxdistros.helper_funcs import fit_distros, SAVGOL_DEFAULT_WINDOW_SIZE
+from peas.utilities import log_print
+
+DEFAULT_DISTRO_CLASS = peas.fitapproxdistros.distributions.PiecewiseApproxLinear
 
 
 def compute_sum_table_1d(vector, end_diagonal=0):
@@ -297,3 +304,72 @@ def compute_max_table_2d(data, start_diagonal=0, end_diagonal=0):
                                               numpy.maximum(max_table[truncate_array_tuple(dk_prev, 1, 0)],
                                                             max_table[truncate_array_tuple(dk_prev, 0, 1)]))
     return max_table
+
+
+def score_shuffled_matrices(matrix, num_shuffles, min_region_size=2, max_region_size=0, start_diagonal=1,
+                            matrix_score_func=compute_mean_table_2d,
+                            random_seed=None):
+    """
+    Given a matrix of values, returns a dictionary, keyed by region size, of
+    scores (mean value) of regions of various size generated from shuffled
+    copies of :param:`matrix`.
+    """
+    MIN_REPORTING_TIME = 1
+    assert matrix.shape[0] == matrix.shape[1]
+    log_print('Setting random seed to {}'.format(random_seed), 3)
+    numpy.random.seed(random_seed)
+    n = matrix.shape[0]
+    if max_region_size == 0:
+        max_region_size = n
+
+    diag_indices = {region_size: my_diag_indices(n, k=region_size - 1) for region_size in
+                    range(min_region_size, max_region_size + 1)}
+    sampled_scores = {region_size: numpy.empty((n - (region_size - 1)) * num_shuffles) for region_size in
+                      range(min_region_size, max_region_size + 1)}
+    sample_indices = {region_size: 0 for region_size in range(min_region_size, max_region_size + 1)}
+
+    # print('n {} start diagonal {}'.format(n, start_diagonal))
+    # upper_tri_indices = numpy.triu_indices(n, start_diagonal)
+
+    # log_print('min: {}, mean: {}, max: {}'.format(matrix[upper_tri_indices].min(), matrix[upper_tri_indices].mean(), matrix[upper_tri_indices].max()), 4)
+
+    last_time = datetime.datetime(1950, 1, 1)
+    for shuffle_idx in range(num_shuffles):
+        cur_time = datetime.datetime.now()
+        elapsed_seconds = (cur_time - last_time).total_seconds()
+        if elapsed_seconds > MIN_REPORTING_TIME:
+            log_print('permutation {} of {}'.format(shuffle_idx + 1, num_shuffles), 4)
+            last_time = cur_time
+        matrix = shuffle_matrix(matrix)
+        # log_print('min: {}, mean: {}, max: {}'.format(matrix[upper_tri_indices].min(), matrix[upper_tri_indices].mean(), matrix[upper_tri_indices].max()), 4)
+        scores = matrix_score_func(matrix, start_diagonal=start_diagonal)
+        for region_size in range(min_region_size, max_region_size + 1):
+            diag_sample = scores[diag_indices[region_size]]
+            sampled_scores[region_size][sample_indices[region_size]:sample_indices[region_size] + len(diag_sample)] = \
+                scores[diag_indices[region_size]]
+            sample_indices[region_size] += len(diag_sample)
+    return sampled_scores
+
+
+def generate_empirical_distributions_dependent_region_means(matrix, num_shuffles, min_region_size=2, max_region_size=0,
+                                                            start_diagonal=1, random_seed=None,
+                                                            distro_class=DEFAULT_DISTRO_CLASS,
+                                                            filter_window_size=SAVGOL_DEFAULT_WINDOW_SIZE):
+    """
+    Given a matrix of values, returns a dictionary, keyed by region size, of
+    empirical distribution objects representing samples of scores of regions
+    of that size taken from permuted versions of :param:`matrix`.
+    """
+    sampled_scores = score_shuffled_matrices(matrix, num_shuffles, min_region_size, max_region_size, start_diagonal,
+                                             random_seed=random_seed)
+
+    log_print('Fitting distributions of class {}'.format(distro_class), 2)
+    sizes = sorted(sampled_scores.keys())
+
+    fit_params = fit_distros(sampled_scores, distro_class, filter_window_size=filter_window_size)
+
+    empirical_distros = {}
+    for region_size in sizes:
+        empirical_distros[region_size] = distro_class(*fit_params[region_size])
+
+    return empirical_distros
