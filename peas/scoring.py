@@ -306,9 +306,12 @@ def compute_max_table_2d(data, start_diagonal=0, end_diagonal=0):
     return max_table
 
 
-def score_shuffled_matrices(matrix, num_shuffles, min_region_size=2, max_region_size=0, start_diagonal=1,
-                            matrix_score_func=compute_mean_table_2d,
-                            random_seed=None):
+import collections
+
+
+def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max_region_size=0, start_diagonal=1,
+                                    matrix_score_func=compute_mean_table_2d,
+                                    random_seed=None):
     """
     Given a matrix of values, returns a dictionary, keyed by region size, of
     scores (mean value) of regions of various size generated from shuffled
@@ -322,16 +325,10 @@ def score_shuffled_matrices(matrix, num_shuffles, min_region_size=2, max_region_
     if max_region_size == 0:
         max_region_size = n
 
-    diag_indices = {region_size: my_diag_indices(n, k=region_size - 1) for region_size in
-                    range(min_region_size, max_region_size + 1)}
-    sampled_scores = {region_size: numpy.empty((n - (region_size - 1)) * num_shuffles) for region_size in
-                      range(min_region_size, max_region_size + 1)}
-    sample_indices = {region_size: 0 for region_size in range(min_region_size, max_region_size + 1)}
-
-    # print('n {} start diagonal {}'.format(n, start_diagonal))
-    # upper_tri_indices = numpy.triu_indices(n, start_diagonal)
-
-    # log_print('min: {}, mean: {}, max: {}'.format(matrix[upper_tri_indices].min(), matrix[upper_tri_indices].mean(), matrix[upper_tri_indices].max()), 4)
+    # sampled_scores = {region_size: numpy.empty((n - (region_size - 1)) * num_shuffles) for region_size in
+    #                   range(min_region_size, max_region_size + 1)}
+    # sample_indices = {region_size: 0 for region_size in range(min_region_size, max_region_size + 1)}
+    sampled_scores = collections.defaultdict(lambda: [])
 
     last_time = datetime.datetime(1950, 1, 1)
     for shuffle_idx in range(num_shuffles):
@@ -341,16 +338,16 @@ def score_shuffled_matrices(matrix, num_shuffles, min_region_size=2, max_region_
             log_print('permutation {} of {}'.format(shuffle_idx + 1, num_shuffles), 4)
             last_time = cur_time
         matrix = shuffle_matrix(matrix)
-        # log_print('min: {}, mean: {}, max: {}'.format(matrix[upper_tri_indices].min(), matrix[upper_tri_indices].mean(), matrix[upper_tri_indices].max()), 4)
         scores = matrix_score_func(matrix, start_diagonal=start_diagonal)
         for region_size in range(min_region_size, max_region_size + 1):
-            diag_sample = scores[diag_indices[region_size]]
-            sampled_scores[region_size][sample_indices[region_size]:sample_indices[region_size] + len(diag_sample)] = \
-                scores[diag_indices[region_size]]
-            sample_indices[region_size] += len(diag_sample)
-    return sampled_scores
+            diag_sample = numpy.diag(v=scores, k=region_size)
+            # print(region_size, zero_count(diag_sample))
+            sampled_scores[region_size].append(diag_sample)
+
+    return {region_size: numpy.array(scores) for region_size, scores in sampled_scores.items()}
 
 
+# ToDo: split function to only perform fitting.
 def generate_empirical_distributions_dependent_region_means(matrix, num_shuffles, min_region_size=2, max_region_size=0,
                                                             start_diagonal=1, random_seed=None,
                                                             distro_class=DEFAULT_DISTRO_CLASS,
@@ -360,8 +357,9 @@ def generate_empirical_distributions_dependent_region_means(matrix, num_shuffles
     empirical distribution objects representing samples of scores of regions
     of that size taken from permuted versions of :param:`matrix`.
     """
-    sampled_scores = score_shuffled_matrices(matrix, num_shuffles, min_region_size, max_region_size, start_diagonal,
-                                             random_seed=random_seed)
+    sampled_scores = generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size, max_region_size,
+                                                     start_diagonal,
+                                                     random_seed=random_seed)
 
     log_print('Fitting distributions of class {}'.format(distro_class), 2)
     sizes = sorted(sampled_scores.keys())

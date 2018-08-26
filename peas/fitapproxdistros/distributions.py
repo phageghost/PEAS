@@ -1,6 +1,7 @@
 import numpy
 import scipy.stats
-from empdist.empirical_pval import empirical_p_val
+
+from empdist.empirical_pval import compute_empirical_pvalue
 from scipy.optimize import curve_fit
 
 DEFAULT_MAX_EMPIRICAL_SIZE = 50
@@ -43,7 +44,7 @@ class PiecewiseApproxLinear:
         # print('min: {} max: {} midpoint: {} extent: {} support: {}'.format(data_min, data_max, midpoint, extent, support))
 
         fit_xs = numpy.linspace(*support, num=interp_points)
-        fit_ys = numpy.log(empirical_p_val(data, values=fit_xs, tail='right', is_sorted=True))
+        fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
         p, e = scipy.optimize.curve_fit(cls._piecewise_logsf, fit_xs, fit_ys,
                                         p0=[initial_inflection_point, initial_slope])
         return p
@@ -91,7 +92,7 @@ class PiecewiseApproxPower:
         # print('min: {} max: {} midpoint: {} extent: {} support: {}'.format(data_min, data_max, midpoint, extent, support))
 
         fit_xs = numpy.linspace(*support, num=interp_points)
-        fit_ys = numpy.log(empirical_p_val(data, values=fit_xs, tail='right', is_sorted=True))
+        fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
         p, e = scipy.optimize.curve_fit(cls._piecewise_logsf, fit_xs, fit_ys,
                                         p0=[initial_inflection_point, initial_power, initial_scale])
         return p
