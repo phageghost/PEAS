@@ -306,9 +306,6 @@ def compute_max_table_2d(data, start_diagonal=0, end_diagonal=0):
     return max_table
 
 
-import collections
-
-
 def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max_region_size=0, start_diagonal=1,
                                     matrix_score_func=compute_mean_table_2d,
                                     random_seed=None):
@@ -317,7 +314,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     scores (mean value) of regions of various size generated from shuffled
     copies of :param:`matrix`.
     """
-    MIN_REPORTING_TIME = 1
+    MIN_REPORTING_TIME = 5
     assert matrix.shape[0] == matrix.shape[1]
     log_print('Setting random seed to {}'.format(random_seed), 3)
     numpy.random.seed(random_seed)
@@ -325,10 +322,8 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     if max_region_size == 0:
         max_region_size = n
 
-    # sampled_scores = {region_size: numpy.empty((n - (region_size - 1)) * num_shuffles) for region_size in
-    #                   range(min_region_size, max_region_size + 1)}
-    # sample_indices = {region_size: 0 for region_size in range(min_region_size, max_region_size + 1)}
-    sampled_scores = collections.defaultdict(lambda: [])
+    sampled_scores = {region_size: numpy.empty((n - (region_size - 1)) * num_shuffles) for region_size in
+                      range(min_region_size, max_region_size + 1)}
 
     last_time = datetime.datetime(1950, 1, 1)
     for shuffle_idx in range(num_shuffles):
@@ -340,11 +335,13 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
         matrix = shuffle_matrix(matrix)
         scores = matrix_score_func(matrix, start_diagonal=start_diagonal)
         for region_size in range(min_region_size, max_region_size + 1):
-            diag_sample = numpy.diag(v=scores, k=region_size)
-            # print(region_size, zero_count(diag_sample))
-            sampled_scores[region_size].append(diag_sample)
+            diag_sample = numpy.diag(v=scores, k=region_size - 1)
+            assert len(diag_sample) == n - (region_size - 1)
 
-    return {region_size: numpy.array(scores) for region_size, scores in sampled_scores.items()}
+            sampled_scores[region_size][
+            shuffle_idx * len(diag_sample):(shuffle_idx + 1) * len(diag_sample)] = diag_sample
+
+    return sampled_scores
 
 
 # ToDo: split function to only perform fitting.
