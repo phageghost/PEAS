@@ -22,7 +22,7 @@ def smooth_parameters(param_dict, filter_window_size=SAVGOL_DEFAULT_WINDOW_SIZE)
     return param_dict
 
 
-def fit_distros(shuffled_samples, distribution_class, filter_window_size=SAVGOL_DEFAULT_WINDOW_SIZE):
+def fit_distros(shuffled_samples, distribution_class, filter_window_size=SAVGOL_DEFAULT_WINDOW_SIZE, fit_kwargs={}):
     """
     Given a dictionary of permuted data vectors, return a dictionary of optimal parameters
     (as tuples) for distributions of class :param:`distro_class`.
@@ -32,7 +32,7 @@ def fit_distros(shuffled_samples, distribution_class, filter_window_size=SAVGOL_
     fit_params = {}
     for region_size in sizes:
         # log_print('size {}, min score: {}, mean score: {}, max score: {}'.format(region_size, sampled_scores[region_size].min(), sampled_scores[region_size].mean(), sampled_scores[region_size].max()),3)
-        this_fit_params = distribution_class.fit(shuffled_samples[region_size])
+        this_fit_params = distribution_class.fit(shuffled_samples[region_size], **fit_kwargs)
         fit_params[region_size] = this_fit_params
         log_print('size: {} fit parameters: {}'.format(region_size, this_fit_params), 3)
 

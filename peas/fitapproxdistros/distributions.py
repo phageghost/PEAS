@@ -50,7 +50,7 @@ class PiecewiseApproxLinear:
             initial_inflection_point = data_mean
 
         p, e = scipy.optimize.curve_fit(cls._piecewise_logsf, fit_xs, fit_ys,
-                                        p0=[initial_inflection_point, initial_slope])
+                                        p0=numpy.array([initial_inflection_point, initial_slope]))
         return p
 
     def logsf(self, x):
@@ -114,30 +114,56 @@ class PiecewiseApproxPower:
             x < :param:`inflection_point`: 0
             x >= :param:`inflection_point`: :param:`scale` * (:param:`x` - :param:`inflection_point`)**:param:`power`
         """
+        assert inflection_point < x[-1], 'Inflection point must be smaller than largest x value to avoid all zeros'
         return numpy.piecewise(x, [x < inflection_point],
                                [lambda x: 0, lambda x: scale * (x - inflection_point) ** power])
 
     @classmethod
-    def fit(cls, data, is_sorted=False, support_quantile=DEFAULT_SUPPORT_QUANTILE, interp_points=50,
-            initial_inflection_point=None, initial_power=2, initial_scale=-1e6):
+    def fit(cls, data, is_sorted=False, max_pvalue_std_error=0.05, interp_points=50,
+            initial_inflection_point=None, initial_power=1, optimization_kwargs={}):
+
         if not is_sorted:
             data = numpy.sort(data)
 
-        data_min, data_max = data[0], data[-1]
-        extent = data_max - data_min
-        midpoint = (data_min + data_max) / 2
+        min_val, max_val = data.min(), data.max()
+        data_mean = data.mean()
+        endpoint = compute_empirical_quantile(data, 1 - determine_p_cutoff(n=len(data)), is_sorted=True)
 
-        support = midpoint - extent / 2, midpoint + (extent * support_quantile / 2)
+        if endpoint <= data_mean:
+            raise ValueError(
+                'Minimum data value that meets target p-value error threshold of {} is {}, which is below the mean of {}, therefore piecewise linear approximation will not work. Try generating more empirical samples or increasing the error tolerance.'.format(
+                    max_pvalue_std_error, endpoint, initial_inflection_point))
 
-        if initial_inflection_point == None:
-            initial_inflection_point = data.mean()
-        # print('min: {} max: {} midpoint: {} extent: {} support: {}'.format(data_min, data_max, midpoint, extent, support))
-
-        fit_xs = numpy.linspace(*support, num=interp_points)
+        fit_xs = numpy.concatenate((numpy.linspace(min_val, data_mean, num=interp_points),
+                                    numpy.linspace(data_mean, endpoint, num=interp_points)))
         fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
-        p, e = scipy.optimize.curve_fit(cls._piecewise_logsf, fit_xs, fit_ys,
-                                        p0=[initial_inflection_point, initial_power, initial_scale])
-        return p
+
+        if initial_inflection_point is None:
+            initial_inflection_point = data_mean
+
+        res = scipy.optimize.minimize(fun=cls._generate_obj_func(fit_xs, fit_ys),
+                                      x0=numpy.array([initial_inflection_point, initial_power]),
+                                      bounds=((-numpy.inf, endpoint - 1e-4),
+                                              (1, numpy.inf)),
+                                      method='L-BFGS-B', **optimization_kwargs
+                                      )
+        inflection_point, power = res.x
+
+        first_pass_ys = cls._piecewise_logsf(fit_xs, inflection_point, power, scale=-1)
+        scale = - (fit_ys[-1] / first_pass_ys[-1])
+
+        return inflection_point, power, scale
+
+    @classmethod
+    def _generate_obj_func(cls, fit_xs, fit_ys):
+        def obj_func(params):
+            inflection_point, power = params
+            test_ys = cls._piecewise_logsf(x=fit_xs, inflection_point=inflection_point, power=power, scale=-1)
+
+            score = scipy.stats.pearsonr(test_ys, fit_ys)[0]
+            return -score
+
+        return obj_func
 
     def logsf(self, x):
         return self._piecewise_logsf(x, self.inflection_point, self.power, self.scale)
