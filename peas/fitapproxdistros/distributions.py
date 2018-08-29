@@ -4,9 +4,6 @@ import scipy.stats
 from empdist.empirical_pval import compute_empirical_pvalue,  determine_p_cutoff, compute_empirical_quantile
 from scipy.optimize import curve_fit
 
-DEFAULT_MAX_EMPIRICAL_SIZE = 50
-DEFAULT_SUPPORT_QUANTILE = 0.9
-
 
 class PiecewiseApproxLinear:
     """

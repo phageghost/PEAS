@@ -1,14 +1,16 @@
 import numpy
+import scipy.stats
 
 from peas import scoring
 from peas.arrayfuncs import replace_nans_diagonal_means, compute_vector_trim_points, compute_matrix_trim_points, \
     create_diagonal_distance_matrix, create_data_masks
 from peas.fitapproxdistros import distributions
-from peas.utilities import log_print, gaussian_norm
+from peas.utilities import log_print, gaussian_norm, validate_param
 
 DEFAULT_PVALUE_TARGET = 1e-6
 MAX_PSCORE = 744.44007192138122
 MIN_PVALUE = numpy.exp(-MAX_PSCORE)
+MAX_PVAL = 1 - 1e-100
 
 VALID_SCORING_METHODS = ('sum', 'mean', 'max', 'min')
 
@@ -172,28 +174,14 @@ def generate_score_distributions_matrix(input_matrix, min_score, max_pval, min_s
     return region_scores, empirical_distros
 
 
-def compute_pscores(region_scores, empirical_distros):
-    log_print('computing -log pvalues ...', 2)
 
-    if len(region_scores.shape) == 1:  # ToDo: Do logsf with flexible tails to avoid this hackiness
-        region_pvals = simstraps.compute_pvalues_matrix(data_matrix=region_scores,
-                                                        distro_dict=empirical_distros,
-                                                        diagonal_start=min_size - 1,
-                                                        diagonal_end=max_distro_size,
-                                                        tail=tail)
-        pval_scores = -numpy.log(numpy.maximum(region_pvals, MIN_PVALUE))
-
-    else:
-        pval_scores = simstraps.compute_pscores_matrix(data_matrix=region_scores,
-                                                       distro_dict=empirical_distros,
-                                                       diagonal_start=min_size - 1,
-                                                       diagonal_end=max_distro_size,
-                                                       tail=tail)
-
-    return pval_scores
 
 
 def filter_candidate_regions(region_scores, pval_scores, min_size, max_size, min_score, max_pval):
+    assert region_scores.shape[0] == region_scores.shape[1]
+    assert pval_scores.shape[0] == pval_scores.shape[1]
+    assert region_scores.shape[0] == pval_scores.shape[0]
+    n = region_scores.shape[0]
     # Apply filters to generate masks
 
     log_print('applying filters ...', 2)
@@ -220,8 +208,16 @@ def filter_candidate_regions(region_scores, pval_scores, min_size, max_size, min
     return row_masks, col_masks
 
 
-def compute_edge_weights(pval_scores, maximization_target='p_prod', edge_weight_power=2):
-    # Optimize region sets for given maximization target
+def compute_edge_weights(region_scores, region_pvals, pval_scores, maximization_target='p_prod', edge_weight_power=2):
+    assert validate_param('maximization_target', maximization_target,
+                          ('p_prod', 'coverage', 'score', 'information', 'z'))
+    assert region_scores.shape[0] == region_scores.shape[1]
+    assert region_pvals.shape[0] == region_pvals.shape[1]
+    assert pval_scores.shape[0] == pval_scores.shape[1]
+    assert region_scores.shape[0] == region_pvals.shape[0]
+    assert region_scores.shape[0] == pval_scores.shape[0]
+    n = pval_scores.shape[0]
+
 
     if maximization_target == 'p_prod':
         log_print('minimizing product of p-values', 2)
@@ -232,25 +228,20 @@ def compute_edge_weights(pval_scores, maximization_target='p_prod', edge_weight_
         edge_weights = create_diagonal_distance_matrix(n).astype(float)
 
     elif maximization_target == 'score':  # with mean scores this will just pick up minimum size regions so is pretty useless at the moment.
-        log_print('maximizing combined mean', 2)
+        log_print('maximizing combined score', 2)
         edge_weights = region_scores.copy()
 
-    # elif maximization_target == 'information':
-    #     log_print('maximizing information content', 2)
-    #     edge_weights = simstraps.compute_information_matrix(region_scores, empirical_distros,
-    #                                                         diagonal_start=min_size - 1, diagonal_end=max_size)
-    #     print(numpy.isnan(edge_weights).sum(), numpy.isinf(edge_weights).sum(), numpy.isneginf(edge_weights).sum())
+    elif maximization_target == 'information':
+        log_print('maximizing information content', 2)
+        edge_weights = simstraps.compute_information_matrix(region_scores, empirical_distros,
+                                                            diagonal_start=min_size - 1, diagonal_end=max_size)
 
     elif maximization_target == 'z':
         log_print('maximizing standard z score of p-values', 2)
         edge_weights = region_pvals.copy()
-        # print(numpy.isnan(edge_weights).sum(), numpy.isinf(edge_weights).sum(), numpy.isneginf(edge_weights).sum())
-        edge_weights[numpy.equal(region_pvals, 1)] = MAX_PVALUE
-        # print(numpy.isnan(edge_weights).sum(), numpy.isinf(edge_weights).sum(), numpy.isneginf(edge_weights).sum())
-        # print(edge_weights)
+        edge_weights[numpy.equal(region_pvals, 1)] = MAX_PVAL 
 
         edge_weights[numpy.triu_indices(n, 1)] = -scipy.stats.norm().ppf(edge_weights[numpy.triu_indices(n, 1)])
-        # print(numpy.isnan(edge_weights).sum(), numpy.isinf(edge_weights).sum(), numpy.isneginf(edge_weights).sum())
 
     if edge_weight_power != 1:
         log_print('raising edge weights to power of {}'.format(edge_weight_power), 2)
@@ -259,71 +250,4 @@ def compute_edge_weights(pval_scores, maximization_target='p_prod', edge_weight_
     return edge_weights
 
 
-def pick_regions(edge_weights, row_masks, col_masks):
-    log_print('computing optimum regions ...', 2)
-    if return_debug_data:
-        original_edge_weights = edge_weights.copy()
-    score_vec, backtrack = find_maximal_path(edge_weights, row_masks, col_masks, gobig=gobig)
-    debug_print(score_vec, backtrack)
 
-    region_coords = decode_backtrack(backtrack)
-
-    if trim_edges:
-        log_print('refining region edges ...', 2)
-        region_coords = trim_regions(data=correlation_matrix,
-                                     region_coords=region_coords,
-                                     min_size=min_size,
-                                     edge_trim_threshold=min_score)
-
-    regions = [(start + row_start_trim_point, end + row_start_trim_point, end - start + 1, region_scores[start, end],
-                region_pvals[start, end]) for start, end in region_coords[::-1]]
-
-    if return_debug_data:
-        if len(input_data.shape) == 2 and trim_input:
-            # Reconstruct matrices that correspond to the untrimmed input matrix
-            def reconstruct_matrix(matrix):
-                full_matrix = numpy.zeros((original_n, original_n), dtype=matrix.dtype)
-                full_matrix[row_start_trim_point:row_end_trim_point, col_start_trim_point:col_end_trim_point] = matrix
-                return full_matrix
-
-            # print(region_scores.shape, reconstruct_matrix
-            return regions, reconstruct_matrix(region_scores), empirical_distros, reconstruct_matrix(
-                region_pvals), reconstruct_matrix(pval_scores), reconstruct_matrix(mask_2d), reconstruct_matrix(
-                original_edge_weights)
-        else:
-            return regions, region_scores, empirical_distros, region_pvals, pval_scores, mask_2d, original_edge_weights
-
-    else:
-        return regions
-
-
-def stitch_regions(region_coords, region_scores, region_pvals):
-    """
-    Given a set of chromosomal regions as a list of start, end, size, score, pvalue tuples,
-    return a new list of tuples where adjacent regions with the same sign score are
-    joined together, with new scores and p-values obtained from the merged region.
-    """
-    stitched_regions = []
-    in_region = False
-    for region_idx in range(len(region_coords) - 1):
-        join = region_coords[region_idx + 1][0] - region_coords[region_idx][1] == 1 and region_coords[region_idx][3] * \
-               region_coords[region_idx + 1][3] > 0
-
-        #         print(region_idx, region_coords[region_idx], region_coords[region_idx+1], join, in_region)
-        if join and not in_region:  # we've just started a stitched region
-            combined_region_start = region_coords[region_idx][0]
-        elif not join:
-            if in_region:
-                # we've just finished a stitched region
-                combined_region_end = region_coords[region_idx][1]
-                combined_region_score = region_scores[combined_region_start, combined_region_end]
-                combined_region_pval = region_pvals[combined_region_start, combined_region_end]
-
-                stitched_regions.append((combined_region_start, combined_region_end,
-                                         combined_region_end - combined_region_start + 1, combined_region_score,
-                                         combined_region_pval))
-            else:
-                stitched_regions.append(region_coords[region_idx])
-
-        in_region = join
-    return stitched_regions
