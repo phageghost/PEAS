@@ -5,7 +5,7 @@ from empdist.empirical_pval import compute_empirical_pvalue, compute_p_confidenc
 from scipy.optimize import curve_fit
 
 
-def rms(X, Y):
+def rms_error(X, Y):
     return numpy.sqrt(numpy.mean((X - Y)**2))
 
 
@@ -158,13 +158,14 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
         inflection_point, power = res.x
 
         first_pass_ys = cls._piecewise_logsf(fit_xs, inflection_point, power, scale=-1)
-        scale = - (fit_ys[-1] / first_pass_ys[-1])
+        # scale = - (fit_ys[-1] / first_pass_ys[-1])
+        scale = -(fit_ys.mean() / first_pass_ys.mean())
 
         return inflection_point, power, scale
 
     @classmethod
     def fit(cls, data, is_sorted=False, max_pvalue_std_error=0.05, interp_points=50,
-            x0=(None, 1), optimization_kwargs={}):
+            x0=(None, 1.2), optimization_kwargs={}):
 
         initial_inflection_point, initial_power = x0
 
