@@ -174,6 +174,7 @@ def compute_sum_table_2d(data, start_diagonal=0, end_diagonal=0):
             # 3rd to final diagonals are contents of that diagonal plus left and beneath cells on previous
             # diagonal, minus the diagonal left-down cell on the k-2 diagonal
             for diagonal_idx in range(start_diagonal + 2, end_diagonal):
+                # print(diagonal_idx)
                 dk_idx = my_diag_indices(n, diagonal_idx)
                 dk_prev = my_diag_indices(n, diagonal_idx - 1)
                 dk_prevprev = my_diag_indices(n, diagonal_idx - 2)

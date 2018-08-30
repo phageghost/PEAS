@@ -37,7 +37,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
             log_print('permutation {} of {}'.format(shuffle_idx + 1, num_shuffles), 4)
             last_time = cur_time
         matrix = shuffle_matrix(matrix)
-        scores = matrix_score_func(matrix, start_diagonal=start_diagonal)
+        scores = matrix_score_func(matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size)
         for region_size in range(min_region_size, max_region_size + 1):
             diag_sample = numpy.diag(v=scores, k=region_size - 1)
             assert len(diag_sample) == n - (region_size - 1)

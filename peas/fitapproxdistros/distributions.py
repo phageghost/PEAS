@@ -5,13 +5,21 @@ from empdist.empirical_pval import compute_empirical_pvalue, compute_p_confidenc
 from scipy.optimize import curve_fit
 
 
+def rms(X, Y):
+    return numpy.sqrt(numpy.mean((X - Y)**2))
+
+
+def cosine_sim(X, Y):
+    return numpy.dot(X, Y) / numpy.linalg.norm(X) / numpy.linalg.norm(Y)
+
+
 class PiecewiseEmpiricalApprox():
     @classmethod
     def _compute_empirical_logsf(cls, data, max_pvalue_std_error=0.05, interp_points=50, is_sorted=False):
         if not is_sorted:
             data = numpy.sort(data)
 
-        min_val, max_val = data.min(), data.max()
+        min_val = data.min()
         data_mean = data.mean()
         endpoint = compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True)
 
@@ -178,11 +186,12 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
             inflection_point, power = params
             test_ys = cls._piecewise_logsf(x=fit_xs, inflection_point=inflection_point, power=power, scale=-1)
 
-            score = scipy.stats.pearsonr(test_ys, fit_ys)[0]
-            # if numpy.isnan(score) or numpy.isinf(score):
-            #     return numpy.inf
+            score = -cosine_sim(fit_ys, test_ys)
 
-            return -score
+            if numpy.isnan(score) or numpy.isinf(score):
+                return numpy.inf
+
+            return score
 
         return obj_func
 
