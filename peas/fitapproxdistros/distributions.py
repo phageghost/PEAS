@@ -149,11 +149,12 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
     def fit_with_existing_empirical_logsf(cls, fit_xs, fit_ys, x0=(None, 1), optimization_kwargs={}):
         initial_inflection_point, initial_power = x0
 
-        res = scipy.optimize.minimize(fun=cls._generate_obj_func(fit_xs, fit_ys),
-                                      x0=numpy.array([initial_inflection_point, initial_power]),
-                                      bounds=((-numpy.inf, fit_xs[-1] - 1e-4),
-                                              (1, numpy.inf)),
-                                      method='L-BFGS-B', **optimization_kwargs
+        res = scipy.optimize.basinhopping(func=cls._generate_obj_func(fit_xs, fit_ys),
+                                          x0=numpy.array([initial_inflection_point, initial_power]),
+                                          minimizer_kwargs={'bounds':((-numpy.inf, fit_xs[-1] - 1e-4),
+                                                            (1, numpy.inf)),
+                                                            'method':'L-BFGS-B'},
+                                          **optimization_kwargs
                                       )
         inflection_point, power = res.x
 

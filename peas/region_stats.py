@@ -93,13 +93,24 @@ def compute_pscores(region_scores, empirical_distros, tail):
     return pval_scores
 
 
-def compute_pvals(frozen_distribution, x, tail='right'):
+def compute_pvalues_tailed(frozen_distribution, x, tail='right'):
     if tail == 'right':
         return frozen_distribution.sf(x)
     elif tail == 'left':
         return frozen_distribution.cdf(x)
     elif tail == 'both':
         return 2 * numpy.minimum(frozen_distribution.cdf(x), frozen_distribution.sf(x))
+    else:
+        raise ValueError('Invalid value for parameter <tail>: {}'.format(tail))
+
+
+def compute_log_pvals_tailed(frozen_distribution, x, tail='right'):
+    if tail == 'right':
+        return frozen_distribution.logsf(x)
+    elif tail == 'left':
+        return numpy.log(frozen_distribution.cdf(x))
+    elif tail == 'both':
+        return numpy.log(2 * numpy.minimum(frozen_distribution.cdf(x), frozen_distribution.sf(x)))
     else:
         raise ValueError('Invalid value for parameter <tail>: {}'.format(tail))
 
@@ -117,16 +128,17 @@ def compute_pvalues_matrix(data_matrix, distro_dict, tail='right', diagonal_star
 
     for diagonal in range(diagonal_start, diagonal_end):  # region size is diagonal + 1
         diag_indices = my_diag_indices(n, diagonal)
-        frozen_distribution = distro_dict[diagonal + 1]
 
-        p_vals[diag_indices] = compute_pvals(frozen_distribution=distro_dict[diagonal + 1],
-                                             x=data_matrix[diag_indices], tail=tail)
+        p_vals[diag_indices] = compute_pvalues_tailed(frozen_distribution=distro_dict[diagonal + 1],
+                                                      x=data_matrix[diag_indices], tail=tail)
     return p_vals
 
 
 def compute_pscores_matrix(data_matrix, distro_dict, tail='right', diagonal_start=1, diagonal_end=0, fill_value=0.0):
     """
-    For every cell in :param:`data_matrix`, computes the p-value of the cell value using the corresponding distribution in :param:`distro_dict` where :math:`k` represents the distance of the cell from the matrix diagonal.
+    For every cell in :param:`data_matrix`, computes the - log p-value of the cell value using the corresponding
+     distribution instance  in :param:`distro_dict` where :math:`k` represents the distance of the cell from
+    the matrix diagonal.
 
     """
     assert data_matrix.shape[0] == data_matrix.shape[1]
@@ -137,15 +149,11 @@ def compute_pscores_matrix(data_matrix, distro_dict, tail='right', diagonal_star
 
     for diagonal in range(diagonal_start, diagonal_end):  # region size is diagonal + 1
         diag_indices = my_diag_indices(n, diagonal)
-        # normal approximation:
-        frozen_distribution = distro_dict[diagonal + 1]
-        # m = frozen_distribution.data.mean()
-        # s = frozen_distribution.data.std()
-        # p_scores[diag_indices] = -scipy.stats.norm(m,s).logsf(data_matrix[diag_indices])
-        p_scores[diag_indices] = -frozen_distribution.logsf(data_matrix[diag_indices])
 
-        # p_vals[diag_indices] = compute_pvals(frozen_distribution=distro_dict[diagonal + 1],
-        # x=data_matrix[diag_indices], tail=tail)
+
+        p_scores[diag_indices] = -compute_log_pvals_tailed(frozen_distribution=distro_dict[diagonal + 1],
+                                                      x=data_matrix[diag_indices], tail=tail)
+
     return p_scores
 
 
