@@ -175,8 +175,6 @@ def generate_score_distributions_matrix(input_matrix, min_score, max_pval, min_s
 
 
 
-
-
 def filter_candidate_regions(region_scores, pval_scores, min_size, max_size, min_score, max_pval):
     assert region_scores.shape[0] == region_scores.shape[1]
     assert pval_scores.shape[0] == pval_scores.shape[1]
