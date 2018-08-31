@@ -34,6 +34,12 @@ class PiecewiseEmpiricalApprox():
 
         return fit_xs, fit_ys
 
+    def sf(self, x):
+        return numpy.exp(self.logsf(x))
+
+    def cdf(self, x):
+        return 1 - self.sf(x)
+
 
 class PiecewiseApproxLinear(PiecewiseEmpiricalApprox):
     """
