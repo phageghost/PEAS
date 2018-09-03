@@ -69,15 +69,15 @@ def fit_distributions(sampled_scores, distribution_class=DEFAULT_DISTRO_CLASS,
     return empirical_distros
 
 
-def compute_pscores(region_scores, empirical_distros, tail):
+def compute_pscores(region_scores, null_distributions, tail):
     log_print('computing -log pvalues ...', 2)
 
-    min_size = min(empirical_distros.keys())
-    max_size = max(empirical_distros.keys())
+    min_size = min(null_distributions.keys())
+    max_size = max(null_distributions.keys())
 
     if len(region_scores.shape) == 1:  # ToDo: Do logsf with flexible tails to avoid this hackiness
         region_pvals = compute_pvalues_matrix(data_matrix=region_scores,
-                                              distro_dict=empirical_distros,
+                                              distro_dict=null_distributions,
                                               diagonal_start=min_size - 1,
                                               diagonal_end=max_size,
                                               tail=tail)
@@ -85,7 +85,7 @@ def compute_pscores(region_scores, empirical_distros, tail):
 
     else:
         pval_scores = compute_pscores_matrix(data_matrix=region_scores,
-                                             distro_dict=empirical_distros,
+                                             distro_dict=null_distributions,
                                              diagonal_start=min_size - 1,
                                              diagonal_end=max_size,
                                              tail=tail)
