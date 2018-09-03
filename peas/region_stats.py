@@ -173,3 +173,11 @@ def compute_information_matrix(data_matrix, distro_dict, diagonal_start=1, diago
         pdf_results = distro_dict[diagonal + 1].pdf(data_matrix[diag_indices])
         information_content[diag_indices] = -numpy.log2(pdf_results)
     return information_content
+
+
+def convert_pvals_to_pscores(pvals):
+    return -numpy.log(pvals)
+
+
+def convert_pscores_to_pvals(pscores):
+    return numpy.exp(-pscores)

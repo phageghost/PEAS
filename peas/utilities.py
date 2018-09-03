@@ -17,8 +17,10 @@ def log_print(message, tabs=1):
 
 
 def validate_param(param_name, value_received, allowable_values):
-    assert value_received in allowable_values, 'Received invalid value \'{}\' for parameter {}. Allowable values: {}'.format(
+    result = value_received in allowable_values
+    assert result, 'Received invalid value \'{}\' for parameter {}. Allowable values: {}'.format(
         value_received, param_name, ', '.join(allowable_values))
+    return result
 
 
 def gaussian_kernel(sd, sd_cutoff=3, normalize=False):

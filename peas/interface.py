@@ -1,18 +1,32 @@
+import empdist
 import numpy
 import scipy.stats
 
-from peas import scoring
 from peas.arrayfuncs import replace_nans_diagonal_means, compute_vector_trim_points, compute_matrix_trim_points, \
     create_diagonal_distance_matrix, create_data_masks
 from peas.fitapproxdistros import distributions
 from peas.utilities import log_print, gaussian_norm, validate_param
+from . import choosing
+from . import region_stats
+from . import scoring
 
 DEFAULT_PVALUE_TARGET = 1e-6
 MAX_PSCORE = 744.44007192138122
 MIN_PVALUE = numpy.exp(-MAX_PSCORE)
 MAX_PVAL = 1 - 1e-100
+DEFAULT_PVALUE_CV = 0.05
 
-VALID_SCORING_METHODS = ('sum', 'mean', 'max', 'min')
+SCORING_FUNCS_BY_NAME = {'sum': scoring.compute_sum_table_2d,
+                         'mean': scoring.compute_mean_table_2d,
+                         'min': scoring.compute_min_table_2d,
+                         'max': scoring.compute_max_table_2d}
+
+NULL_DISTRIBUTIONS_BY_NAME = {'pw_power': distributions.PiecewiseApproxPower,
+                              'pw_linear': distributions.PiecewiseApproxLinear}
+
+DEFAULT_PARAMETER_SMOOTHING_METHOD = 'savgol'
+SAVGOL_DEFAULT_WINDOW_SIZE = 5
+DEFAULT_NULL_DISTRIBUTION, = 'pw_power'
 
 
 def find_ropes(input_data, score_method='mean', min_score=0, max_pval=None, min_size=2, max_size=None,
@@ -45,15 +59,18 @@ def find_ropes_vector(input_vector, min_score=0, max_pval=None, min_size=2, max_
         input_vector = gaussian_norm(input_vector)
 
     region_scores, empirical_distro = generate_score_distributions_vector(input_vector=input_vector)
-    pscores = compute_pscores(region_scores=region_scores, empirical_distros=empirical_distro)
+    pscores = region_stats.compute_pscores(region_scores=region_scores, empirical_distros=empirical_distro)
 
 
 def find_ropes_matrix(input_matrix, min_score=0, max_pval=None, min_size=2, max_size=None,
-                      trim_input=True, trim_edges=False, gobig=True, tail=None,
-                      pvalue_target=DEFAULT_PVALUE_TARGET, start_diagonal=1,
-                      quantile_normalize=False, more_smoothing=False,
-                      edge_weight_constant=0, edge_weight_power=1,
-                      return_debug_data=False, parameter_filter_strength=0, random_seed=None):
+                      tail='both',
+                      maximization_target='p_prod',
+                      edge_weight_power=1,
+                      start_diagonal=1,
+                      quantile_normalize=False,
+                      parameter_filter_strength=0,
+                      random_seed=None,
+                      gobig=True, ):
     numpy.random.seed(random_seed)
     assert input_matrix.shape[0] == input_matrix.shape[1], 'Input matrix must be square.'
 
@@ -74,8 +91,16 @@ def find_ropes_matrix(input_matrix, min_score=0, max_pval=None, min_size=2, max_
         input_matrix = gaussian_norm(input_matrix.flatten()).reshape((n, n))
 
     region_scores, empirical_distro = generate_score_distributions_matrix(input_matrix=input_matrix)
-    pval_scores = compute_pscores(region_scores=region_scores, empirical_distros=empirical_distro)
-    row_masks, col_masks = filter_candidate_regions(pval_scores=pval_scores)
+    pval_scores = region_stats.compute_pscores(region_scores=region_scores, empirical_distros=empirical_distro,
+                                               tail=tail)
+    pvals = region_stats.convert_pscores_to_pvals(pscores=pval_scores)
+    row_masks, col_masks = generate_region_masks(pval_scores=pval_scores, min_size=min_size, max_size=max_size,
+                                                 min_score=min_score, max_pval=max_pval)
+    edge_weights = compute_edge_weights(region_scores, region_pvals=pvals, pval_scores=pval_scores,
+                                        empirical_distributions=empirical_distro, min_size=min_size, max_size=max_size,
+                                        maximization_target=maximization_target, edge_weight_power=edge_weight_power)
+
+    regions = choosing.pick_regions(edge_weights=edge_weights, row_masks=row_masks, col_masks=col_masks, gobig=gobig)
 
 
 def trim_data_vector(input_vector):
@@ -97,85 +122,85 @@ def trim_data_matrix(input_matrix):
     return trimmed_matrix
 
 
-def generate_score_distributions_vector(input_vector, min_score, max_pval, min_size, max_size,
+# def generate_score_distributions_vector(input_vector, min_score, max_pval, min_size, max_size,
+#                                         start_diagonal=1,
+#                                         gobig=True, tail=None,
+#                                         pvalue_target=DEFAULT_PVALUE_TARGET,
+#                                         quantile_normalize=False, more_smoothing=False,
+#                                         edge_weight_constant=0, edge_weight_power=1,
+#                                         return_debug_data=False, parameter_filter_strength=0, random_seed=None):
+#
+#     n = len(input_vector)
+#     max_distro_size = max_size + 1  # ToDo: clean up
+#
+#     log_print('computing means of all subarrays of {}-element vector ...'.format(n), 2)
+#     region_scores = scoring.compute_mean_table_1d(input_vector)
+#     # flat_cell_values = input_data
+#     if not tail: tail = 'both'
+#     log_print('constructing null models for regions up to size {} ...'.format(max_size), 2)
+#     null_data = region_stats.generate_permuted_matrix_scores()
+#     empirical_distros = distributions.generate_empirical_distributions_region_means(data=input_vector,
+#                                                                                     max_region_size=max_distro_size,
+#                                                                                     num_bins=EMPIRICAL_BINS,
+#                                                                                     max_empirical_size=max_distro_size,
+#                                                                                     support=(input_vector.min(),
+#                                                                                              input_vector.max())
+#                                                                                     )
+#
+#
+#     return region_scores, empirical_distros
+
+
+def generate_score_distributions_matrix(input_matrix,
+                                        min_size, max_size,
+                                        score_func='mean',
                                         start_diagonal=1,
-                                        gobig=True, tail=None,
+                                        tail='both',
                                         pvalue_target=DEFAULT_PVALUE_TARGET,
-                                        quantile_normalize=False, more_smoothing=False,
-                                        edge_weight_constant=0, edge_weight_power=1,
-                                        return_debug_data=False, parameter_filter_strength=0, random_seed=None):
-    """
-    Given a peak correlation matrix, return a list of tuples containing information
-    about an optimal set regions such that the number of elements covered by regions with a mean
-    value of at least :param:`score_threshold` and a size of at least :param:`min_size` is maximized.
+                                        max_pvalue_cv=DEFAULT_PVALUE_CV,
+                                        parameter_smoothing_method=DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                                        parameter_filter_strength=SAVGOL_DEFAULT_WINDOW_SIZE,
+                                        num_shuffles='auto',
+                                        null_distribution_class=DEFAULT_NULL_DISTRIBUTION,
+                                        random_seed=None):
 
-    If :param:`trim-edges` is True, remove points from these regions whose corresponding
-    rows fall below :param:`score_threshold`.
-    """
-    n = len(input_vector)
-    max_distro_size = max_size + 1  # ToDo: clean up
-
-    log_print('computing means of all subarrays of {}-element vector ...'.format(n), 2)
-    region_scores = scoring.compute_mean_table_1d(input_vector)
-    # flat_cell_values = input_data
-    if not tail: tail = 'both'
-    log_print('constructing null models for regions up to size {} ...'.format(max_size), 2)
-    empirical_distros = distributions.generate_empirical_distributions_region_means(data=input_vector,
-                                                                                    max_region_size=max_distro_size,
-                                                                                    num_bins=EMPIRICAL_BINS,
-                                                                                    max_empirical_size=max_distro_size,
-                                                                                    support=(input_vector.min(),
-                                                                                             input_vector.max())
-                                                                                    )
-
-
-    return region_scores, empirical_distros
-
-
-def generate_score_distributions_matrix(input_matrix, min_score, max_pval, min_size, max_size,
-                                        start_diagonal=1,
-                                        gobig=True, tail=None,
-                                        pvalue_target=DEFAULT_PVALUE_TARGET,
-                                        quantile_normalize=False, more_smoothing=False,
-                                        edge_weight_constant=0, edge_weight_power=1,
-                                        return_debug_data=False, parameter_filter_strength=0, random_seed=None):
-    """
-    Given a peak correlation matrix, return a list of tuples containing information
-    about an optimal set regions such that the number of elements covered by regions with a mean
-    value of at least :param:`score_threshold` and a size of at least :param:`min_size` is maximized.
-
-    If :param:`trim-edges` is True, remove points from these regions whose corresponding
-    rows fall below :param:`score_threshold`.
-    """
     assert input_matrix.shape[0] == input_matrix.shape[1], 'Input matrix must be square.'
+    validate_param('score_func', score_func, SCORING_FUNCS_BY_NAME.keys())
+    validate_param('null_distribution_class', null_distribution_class, NULL_DISTRIBUTIONS_BY_NAME.keys())
     n = input_matrix.shape[0]
-
-    max_distro_size = max_size + 1  # ToDo: clean up
+    # if not tail: tail = 'right' # ToDo: Adapt code to fit logsf to allow 'left' and 'both' values.
+    assert tail == 'right'
 
     log_print('computing means of all diagonal square subsets of {} x {} matrix ...'.format(n, n), 2)
     region_scores = scoring.compute_mean_table_2d(input_matrix, start_diagonal=start_diagonal)
-    if not tail: tail = 'right'
 
-    # Automatic determination of number of shuffles needed to achieve p-value target based on region sizes. # ToDo: make this better / more principled. Possibly iterative.
-    num_shuffles = int(numpy.ceil((1 / pvalue_target / (n - max_size + 1))))
+    # Automatic determination of number of shuffles needed to achieve p-value target based on region sizes.
+    if num_shuffles == 'auto':
+        num_shuffles = empdist.empirical_pval.compute_number_of_permuted_data_points(target_p_value=pvalue_target,
+                                                                                     max_pvalue_cv=max_pvalue_cv)
 
     log_print(
         'constructing null models for regions up to size {} using {} permutations ...'.format(max_size,
                                                                                               num_shuffles), 2)
 
-    empirical_distros = distributions.generate_empirical_distributions_dependent_region_means(matrix=input_matrix,
-                                                                                              num_shuffles=num_shuffles,
-                                                                                              min_region_size=min_size,
-                                                                                              max_region_size=max_distro_size,
-                                                                                              start_diagonal=start_diagonal,
-                                                                                              random_seed=random_seed,
-                                                                                              filter_window_size=parameter_filter_strength)
+    shuffled_samples = region_stats.generate_permuted_matrix_scores(matrix=input_matrix,
+                                                                    num_shuffles=num_shuffles,
+                                                                    min_region_size=min_size,
+                                                                    max_region_size=max_size,
+                                                                    start_diagonal=start_diagonal,
+                                                                    matrix_score_func=SCORING_FUNCS_BY_NAME[score_func],
+                                                                    random_seed=random_seed)
 
-    return region_scores, empirical_distros
+    null_distributions = region_stats.fit_distributions(sampled_scores=shuffled_samples,
+                                                        distribution_class=NULL_DISTRIBUTIONS_BY_NAME[
+                                                            null_distribution_class],
+                                                        parameter_smoothing_method=parameter_smoothing_method,
+                                                        parameter_smoothing_window_size=parameter_filter_strength)
+
+    return region_scores, null_distributions
 
 
-
-def filter_candidate_regions(region_scores, pval_scores, min_size, max_size, min_score, max_pval):
+def generate_region_masks(region_scores, pval_scores, min_size, max_size, min_score=0, max_pval=None):
     assert region_scores.shape[0] == region_scores.shape[1]
     assert pval_scores.shape[0] == pval_scores.shape[1]
     assert region_scores.shape[0] == pval_scores.shape[0]
@@ -206,8 +231,9 @@ def filter_candidate_regions(region_scores, pval_scores, min_size, max_size, min
     return row_masks, col_masks
 
 
-def compute_edge_weights(region_scores, region_pvals, pval_scores, maximization_target='p_prod', edge_weight_power=2):
-    assert validate_param('maximization_target', maximization_target,
+def compute_edge_weights(region_scores, region_pvals, pval_scores, empirical_distributions,
+                         min_size, max_size, maximization_target='p_prod', edge_weight_power=2):
+    validate_param('maximization_target', maximization_target,
                           ('p_prod', 'coverage', 'score', 'information', 'z'))
     assert region_scores.shape[0] == region_scores.shape[1]
     assert region_pvals.shape[0] == region_pvals.shape[1]
@@ -231,8 +257,8 @@ def compute_edge_weights(region_scores, region_pvals, pval_scores, maximization_
 
     elif maximization_target == 'information':
         log_print('maximizing information content', 2)
-        edge_weights = simstraps.compute_information_matrix(region_scores, empirical_distros,
-                                                            diagonal_start=min_size - 1, diagonal_end=max_size)
+        edge_weights = region_stats.compute_information_matrix(region_scores, empirical_distributions,
+                                                               diagonal_start=min_size - 1, diagonal_end=max_size)
 
     elif maximization_target == 'z':
         log_print('maximizing standard z score of p-values', 2)

@@ -85,7 +85,7 @@ def decode_backtrack(backtrack):
     return regions
 
 
-def pick_regions(edge_weights, row_masks, col_masks, gobig):
+def pick_regions(edge_weights, row_masks, col_masks, gobig=True):
     log_print('computing optimum regions ...', 2)
 
     score_vec, backtrack = find_maximal_path(edge_weights, row_masks, col_masks, gobig=gobig)
