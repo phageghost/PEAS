@@ -145,7 +145,8 @@ def trim_data_vector(input_vector):
     log_print(
         'trimmed {} element vector to remove preceding and trailing NaNs. {} elements remain'.format(len(input_vector),
                                                                                                      len(
-                                                                                                         trimmed_vector)))
+                                                                                                         trimmed_vector)),
+        3)
     return trimmed_vector, trim_start, trim_end
 
 

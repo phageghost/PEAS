@@ -108,7 +108,7 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, output_file
     total_regions = 0
     region_dfs = []
     for chrom, chrom_annotations in annotations.groupby(annotations.columns[0]):
-        log_print('Processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 2)
+        log_print('Processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
         chrom_vector = features.loc[chrom_annotations.index].values
 
         this_chrom_peas = interface.find_peas_vector(input_vector=chrom_vector, min_score=min_score,
