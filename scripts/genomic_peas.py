@@ -4,6 +4,7 @@ import argparse
 import sys
 
 import peas
+from peas import constants
 
 
 def parse_and_validate_columns(col_param_string, mode):
@@ -35,7 +36,7 @@ def main():
     parser = argparse.ArgumentParser(prog='peas')
     parser.add_argument('mode', help='operate in vector or matrix mode', type=str, choices=('vector', 'matrix'))
     parser.add_argument('input_file', help='input file', type=str)
-    parser.add_argument('input-file-type', help='whether the file is in BED format or HOMER format',
+    parser.add_argument('input_file_type', help='whether the file is in BED format or HOMER format',
                         choices=('bed', 'homer'))
 
     parser.add_argument('columns',
@@ -45,11 +46,13 @@ def main():
     parser.add_argument('--tail', '-t',
                         help='look for regions with greater than expected values (right), lower than expected values (left) or either (both)',
                         choices=('right', 'left', 'both'), default='both')
-    parser.add_argument('--min-score', '-s', help='minimum region score', type=float, default=0.0)
-    parser.add_argument('--pvalue', '-p', help='p-value threshold', type=float, default=1e-3)
-    parser.add_argument('--fdr', '-f', help='FDR threshold', type=float, default=0.05)
-    parser.add_argument('--min-size', '-m', help='minimum region size', type=int, default=2)
-    parser.add_argument('--max-size', '-n', help='maximum region size', type=int, default=0)
+    parser.add_argument('--min-score', '-s', help='minimum region score', type=float,
+                        default=constants.DEFAULT_MIN_SCORE)
+    parser.add_argument('--pvalue', '-p', help='p-value threshold', type=float,
+                        default=constants.DEFAULT_PVALUE_THRESHOLD)
+    parser.add_argument('--fdr', '-f', help='FDR threshold', type=float, default=constants.DEFAULT_FDR_THRESHOLD)
+    parser.add_argument('--min-size', '-m', help='minimum region size', type=int, default=constants.DEFAULT_MIN_SIZE)
+    parser.add_argument('--max-size', '-n', help='maximum region size', type=int, default=constants.DEFAULT_MAX_SIZE)
     parser.add_argument('--alpha', '-a', help='power to apply to edge weights prior to computing optimal regions',
                         type=float, default=2)
     parser.add_argument('--output', '-o', help='output file. If not specified prints output to STDOUT', type=str,
@@ -90,20 +93,19 @@ def main():
 
     feature_columns = parse_and_validate_columns(args.columns, args.mode)
     if feature_columns:
-
-        print(args)
-
         if args.mode == 'vector':
             peas.genomic_regions.find_genomic_region_crds_vector(peak_filename=args.input_file,
                                                                  peak_file_format=args.input_file_type,
                                                                  feature_columns=feature_columns,
                                                                  rip_norm=args.col_norm,
-                                                                 znorm=args.znorm, log_transform=args.log_transform,
+                                                                 znorm=args.z_transform,
+                                                                 log_transform=args.log_transform,
                                                                  tail=args.tail, min_score=args.min_score,
                                                                  pvalue=args.pvalue, fdr=args.fdr,
                                                                  min_size=args.min_size,
                                                                  max_size=args.max_size, alpha=args.alpha,
-                                                                 bins=args.bins)
+                                                                 bins=args.bins,
+                                                                 output_filename=args.output)
 
 if __name__ == '__main__':
     sys.exit(main())

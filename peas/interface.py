@@ -11,31 +11,32 @@ from . import region_stats
 from . import scoring
 
 
-def find_ropes(input_data, score_method='mean', min_score=0, max_pval=None, min_size=2, max_size=None,
-               trim_input=True, trim_edges=False, gobig=True, tail=None,
-               pvalue_target=constants.DEFAULT_PVALUE_TARGET, start_diagonal=1,
-               quantile_normalize=False, more_smoothing=False,
-               edge_weight_constant=0, edge_weight_power=1,
-               return_debug_data=False, parameter_filter_strength=0, random_seed=None):
+def find_peas(input_data, score_method='mean', min_score=0, max_pval=None, min_size=2, max_size=None,
+              trim_input=True, trim_edges=False, gobig=True, tail=None,
+              pvalue_target=constants.DEFAULT_PVALUE_TARGET, start_diagonal=1,
+              quantile_normalize=False, more_smoothing=False,
+              edge_weight_constant=0, edge_weight_power=1,
+              return_debug_data=False, parameter_filter_strength=0, random_seed=None):
     assert len(input_data.shape <= 2), 'Input array has too many dimensions (max 2).'
 
     if len(input_data.shape) == 1:
         log_print('Input is 1D vector')
-        find_ropes_vector()
+        find_peas_vector()
 
     elif len(input_data.shape) == 2:
         log_print('Input is 2D matrix')
-        find_ropes_matrix()
+        find_peas_matrix()
 
 
 # ToDo: Replace hard-coded defaults with global constants.
-def find_ropes_vector(input_vector, min_score=0, max_pval=None, min_size=2, max_size=None,
-                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
-                      tail='both',
-                      bins='auto',
-                      quantile_normalize=False,
-                      edge_weight_power=1,
-                      gobig=True):
+def find_peas_vector(input_vector, min_score=0, max_pval=None, min_size=2, max_size=constants.DEFAULT_MAX_SIZE,
+                     maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
+                     tail='both',
+                     bins='auto',
+                     quantile_normalize=False,
+                     edge_weight_power=1,
+                     gobig=True):
+
     input_vector, trim_start, trim_end = trim_data_vector(input_vector)
     # ToDo: move data normalization steps from genomic_regions to here so they can operate NaN-free
 
@@ -47,35 +48,34 @@ def find_ropes_vector(input_vector, min_score=0, max_pval=None, min_size=2, max_
                                                                             min_size=min_size, max_size=max_size,
                                                                             bins=bins,
                                                                             score_func_name='mean',
-                                                                            tail=tail,
                                                                             pseudocount=constants.DEFAULT_PSEUDOCOUNT)
-                                        
-    return find_ropes_common(region_scores=region_scores,
-                             null_distributions=null_distributions,
-                             trim_start=trim_start,
-                             tail=tail, maximization_target=maximization_target,
-                             min_size=min_size, max_size=max_size,
-                             min_score=min_score, max_pval=max_pval,
-                             edge_weight_power=edge_weight_power,
-                             gobig=gobig)
+
+    return find_peas_common(region_scores=region_scores,
+                            null_distributions=null_distributions,
+                            trim_start=trim_start,
+                            tail=tail, maximization_target=maximization_target,
+                            min_size=min_size, max_size=max_size,
+                            min_score=min_score, max_pval=max_pval,
+                            edge_weight_power=edge_weight_power,
+                            gobig=gobig)
 
 
-def find_ropes_matrix(input_matrix,
-                      score_func_name=constants.DEFAULT_SCORE_FUNC,
-                      min_score=0, max_pval=None, min_size=2, max_size=None,
-                      tail='both',
-                      pvalue_target=constants.DEFAULT_PVALUE_TARGET,
-                      max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
-                      num_shuffles='auto',
-                      null_distribution_class=constants.DEFAULT_NULL_DISTRIBUTION,
-                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
-                      edge_weight_power=1,
-                      start_diagonal=1,
-                      quantile_normalize=False,
-                      parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                      parameter_filter_strength=constants.SAVGOL_DEFAULT_WINDOW_SIZE,
-                      random_seed=None,
-                      gobig=True):
+def find_peas_matrix(input_matrix,
+                     score_func_name=constants.DEFAULT_SCORE_FUNC,
+                     min_score=0, max_pval=None, min_size=2, max_size=None,
+                     tail='both',
+                     pvalue_target=constants.DEFAULT_PVALUE_TARGET,
+                     max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
+                     num_shuffles='auto',
+                     null_distribution_class=constants.DEFAULT_NULL_DISTRIBUTION,
+                     maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
+                     edge_weight_power=1,
+                     start_diagonal=1,
+                     quantile_normalize=False,
+                     parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                     parameter_filter_strength=constants.SAVGOL_DEFAULT_WINDOW_SIZE,
+                     random_seed=None,
+                     gobig=True):
     numpy.random.seed(random_seed)
     assert input_matrix.shape[0] == input_matrix.shape[1], 'Input matrix must be square.'
 
@@ -108,30 +108,29 @@ def find_ropes_matrix(input_matrix,
                                                                             num_shuffles=num_shuffles,
                                                                             null_distribution_class=null_distribution_class,
                                                                             random_seed=random_seed)
-    return find_ropes_common(region_scores=region_scores,
-                             null_distributions=null_distributions,
-                             trim_start=row_start_trim_point,
-                             tail=tail, maximization_target=maximization_target,
-                             min_size=min_size, max_size=max_size,
-                             min_score=min_score,
-                             max_pval=max_pval,
-                             edge_weight_power=edge_weight_power,
-                             gobig=gobig)
+    return find_peas_common(region_scores=region_scores,
+                            null_distributions=null_distributions,
+                            trim_start=row_start_trim_point,
+                            tail=tail, maximization_target=maximization_target,
+                            min_size=min_size, max_size=max_size,
+                            min_score=min_score,
+                            max_pval=max_pval,
+                            edge_weight_power=edge_weight_power,
+                            gobig=gobig)
 
 
-def find_ropes_common(region_scores, null_distributions, trim_start, tail, maximization_target, min_score, min_size,
-                      max_size, max_pval, edge_weight_power, gobig):
+def find_peas_common(region_scores, null_distributions, trim_start, tail, maximization_target, min_score, min_size,
+                     max_size, max_pval, edge_weight_power, gobig):
     pscores = region_stats.compute_pscores(region_scores=region_scores, null_distributions=null_distributions,
                                            tail=tail)
     pvals = region_stats.convert_pscores_to_pvals(pscores=pscores)
-
-    row_masks, col_masks = generate_region_masks(pval_scores=pscores, min_size=min_size, max_size=max_size,
+    row_masks, col_masks = generate_region_masks(region_scores=region_scores, pval_scores=pscores, min_size=min_size,
+                                                 max_size=max_size,
                                                  min_score=min_score, max_pval=max_pval)
     edge_weights = compute_edge_weights(region_scores, region_pvals=pvals, pval_scores=pscores,
                                         empirical_distributions=null_distributions, min_size=min_size,
                                         max_size=max_size,
                                         maximization_target=maximization_target, edge_weight_power=edge_weight_power)
-
     region_coords = choosing.pick_regions(edge_weights=edge_weights, row_masks=row_masks, col_masks=col_masks,
                                           gobig=gobig)
     regions = [(start + trim_start, end + trim_start, end - start + 1, region_scores[start, end],
@@ -162,24 +161,22 @@ def trim_data_matrix(input_matrix):
 def generate_score_distributions_vector(input_vector, min_size, max_size,
                                         bins='auto',
                                         score_func_name='mean',
-                                        tail='both',
                                         pseudocount=constants.DEFAULT_PSEUDOCOUNT):
     validate_param('score_func_name', score_func_name, constants.VECTOR_SCORE_FUNCS_BY_NAME.keys())
     n = len(input_vector)
 
     log_print('computing means of all subarrays of {}-element vector ...'.format(n), 2)
-    region_scores = scoring.compute_mean_table_1d(input_vector)
-    if not tail: tail = 'both'
+    region_scores = scoring.compute_mean_table_1d(input_vector, end_diagonal=max_size - 1)
+
     log_print('constructing null models for regions up to size {} ...'.format(max_size), 2)
 
     singleton_distribution = empdist.EmpiricalDistribution.from_data(data=input_vector,
                                                                      bins=bins,
-                                                                     pseudocount=pseudocount)
-    score_func = constants.VECTOR_SCORE_FUNCS_BY_NAME[score_func_name]
+                                                                     pseudocount=pseudocount)  # type: empdist.EmpiricalDistribution
 
-    null_distributions = score_func(input_empirical_distribution=singleton_distribution,
-                                    max_sample_size=max_size))
+    score_func = constants.VECTOR_SCORE_FUNCS_BY_NAME[score_func_name]  # type: function
 
+    null_distributions = score_func(input_empirical_distribution=singleton_distribution, max_sample_size=max_size)
     null_distributions = {i: null_distributions[i] for i in range(min_size, max_size + 1)}
 
     return region_scores, null_distributions
