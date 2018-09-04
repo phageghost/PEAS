@@ -20,7 +20,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     """
     MIN_REPORTING_TIME = 5
     assert matrix.shape[0] == matrix.shape[1]
-    log_print('Setting random seed to {}'.format(random_seed), 3)
+    log_print('setting random seed to {}'.format(random_seed), 3)
     numpy.random.seed(random_seed)
     n = matrix.shape[0]
     if max_region_size == 0:
@@ -34,7 +34,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
         cur_time = datetime.datetime.now()
         elapsed_seconds = (cur_time - last_time).total_seconds()
         if elapsed_seconds > MIN_REPORTING_TIME:
-            log_print('permutation {} of {}'.format(shuffle_idx + 1, num_shuffles), 4)
+            log_print('permutation {} of {}'.format(shuffle_idx + 1, num_shuffles), 3)
             last_time = cur_time
         matrix = shuffle_matrix(matrix)
         scores = matrix_score_func(matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size)

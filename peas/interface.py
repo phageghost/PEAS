@@ -73,10 +73,10 @@ def find_peas_matrix(input_matrix,
                      start_diagonal=1,
                      quantile_normalize=False,
                      parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                     parameter_filter_strength=constants.SAVGOL_DEFAULT_WINDOW_SIZE,
+                     parameter_filter_strength=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE,
                      random_seed=None,
                      gobig=True):
-    numpy.random.seed(random_seed)
+
     assert input_matrix.shape[0] == input_matrix.shape[1], 'Input matrix must be square.'
 
     trimmed_matrix, row_start_trim_point, row_end_trim_point, col_start_trim_point, col_end_trim_point = trim_data_matrix(
@@ -90,7 +90,7 @@ def find_peas_matrix(input_matrix,
     assert start_diagonal < min_size
 
     trimmed_matrix = replace_nans_diagonal_means(trimmed_matrix, start_diagonal=start_diagonal,
-                                                 end_diagonal=max_size)  # ToDo: Handle unsquare trimming results
+                                                 end_diagonal=max_size - 1)  # ToDo: Handle unsquare trimming results
 
     if quantile_normalize:
         log_print('quantile-normalizing matrix to standard Gaussian ...', 2)
@@ -146,7 +146,7 @@ def trim_data_vector(input_vector):
         'trimmed {} element vector to remove preceding and trailing NaNs. {} elements remain'.format(len(input_vector),
                                                                                                      len(
                                                                                                          trimmed_vector)),
-        3)
+        2)
     return trimmed_vector, trim_start, trim_end
 
 
@@ -155,7 +155,7 @@ def trim_data_matrix(input_matrix):
         input_matrix)
     trimmed_matrix = input_matrix[row_start_trim_point:row_end_trim_point, col_start_trim_point:col_end_trim_point]
     log_print('trimmed {} x {} matrix to remove contiguous NaNs, now {} x {}.'.format(*input_matrix.shape,
-                                                                                      *trimmed_matrix.shape))
+                                                                                      *trimmed_matrix.shape), 2)
     return trimmed_matrix, row_start_trim_point, row_end_trim_point, col_start_trim_point, col_end_trim_point
 
 
@@ -191,7 +191,7 @@ def generate_score_distributions_matrix(input_matrix,
                                         pvalue_target=constants.DEFAULT_PVALUE_TARGET,
                                         max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
                                         parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                                        parameter_filter_strength=constants.SAVGOL_DEFAULT_WINDOW_SIZE,
+                                        parameter_filter_strength=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE,
                                         num_shuffles='auto',
                                         null_distribution_class=constants.DEFAULT_NULL_DISTRIBUTION,
                                         random_seed=None):
@@ -208,7 +208,8 @@ def generate_score_distributions_matrix(input_matrix,
     # Automatic determination of number of shuffles needed to achieve p-value target based on region sizes.
     if num_shuffles == 'auto':
         num_shuffles = empdist.empirical_pval.compute_number_of_permuted_data_points(target_p_value=pvalue_target,
-                                                                                     max_pvalue_cv=max_pvalue_cv)
+                                                                                     max_pvalue_cv=max_pvalue_cv) // (
+                                   n - max_size - 1)
 
     log_print(
         'constructing null models for regions up to size {} using {} permutations ...'.format(max_size,

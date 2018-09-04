@@ -11,7 +11,7 @@ def smooth_parameters(param_dict, parameter_smoothing_window_size=constants.SAVG
         if parameter_smoothing_window_size:
             parameter_smoothing_window_size = max(force_odd(int(parameter_smoothing_window_size)), 3)
             log_print(
-                'Smoothing parameters with Savitsky-Golay filter of size {}'.format(parameter_smoothing_window_size), 3)
+                'smoothing parameters with Savitsky-Golay filter of size {}'.format(parameter_smoothing_window_size), 3)
             param_df = pandas.DataFrame(param_dict).T  # ToDo: refactor to remove pandas dependency here.
             param_array = savgol_filter(param_df, parameter_smoothing_window_size, 1, axis=0)
             param_dict = {region_size: params for region_size, params in

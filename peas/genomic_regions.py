@@ -45,12 +45,12 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     peak_df = peak_df.sort_values(by=[chrom_column_heading, start_column_heading])
 
     annotations = peak_df.iloc[:, :4]
-    features = peak_df.iloc[:, feature_columns]
+    features = peak_df.iloc[:, numpy.array(feature_columns) - 1]  # account for index column
 
     return annotations, features
 
 
-def normalize_features(features, feature_columns, rip_norm=True, znorm=False, log_transform=True):
+def normalize_features(features, rip_norm=True, znorm=False, log_transform=True):
     """
     Given a pandas DataFrame with peaks for each condition in columns,
     normalize the column vectors according to the given flags.
@@ -58,26 +58,29 @@ def normalize_features(features, feature_columns, rip_norm=True, znorm=False, lo
     # ToDo: add option for pseudocount transform
     if rip_norm:
         log_print('Normalizing by reads in regions ...', 3)
-        condition_means = features.iloc[:, feature_columns].mean(axis=0)
-        features.iloc[:, feature_columns] /= condition_means / condition_means.mean()
+        condition_means = features.mean(axis=0)
+        features /= condition_means / condition_means.mean()
 
     if log_transform:
         log_print('Log transforming ...', 3)
-        features.iloc[:, feature_columns] = numpy.log2(features.iloc[:, feature_columns] + 1)
+        features = numpy.log2(features + 1)
 
     if znorm:
         log_print('Z-score transforming ...', 3)
-        condition_means = features.iloc[:, feature_columns].mean(axis=0)
-        condition_stds = features.iloc[:, feature_columns].std(axis=0)
-        features.iloc[:, feature_columns] = (features.iloc[:,
-                                             feature_columns] - condition_means) / condition_stds
+        condition_means = features.mean(axis=0)
+        condition_stds = features.std(axis=0)
+        features = (features - condition_means) / condition_stds
 
     return features
 
 
-# ToDo: Add default values using module-wide constants.
-def find_genomic_region_crds_vector(peak_filename, peak_file_format, output_filename, feature_columns, rip_norm, znorm,
-                                    log_transform, tail, min_score, pvalue, fdr, min_size, max_size, alpha, bins):
+def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_columns, output_filename='',
+                                    rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
+                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, tail=constants.DEFAULT_TAIL,
+                                    min_score=constants.DEFAULT_MIN_SCORE, pvalue=constants.DEFAULT_PVALUE_THRESHOLD,
+                                    fdr=constants.DEFAULT_FDR_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE,
+                                    max_size=constants.DEFAULT_MAX_SIZE, alpha=constants.DEFAULT_ALPHA,
+                                    bins=constants.DEFAULT_BINS):
     if peak_file_format == 'bed':
         annotations, features = load_and_parse_bed_file(bed_fname=peak_filename, feature_columns=feature_columns)
     else:
@@ -92,7 +95,7 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, output_file
 
     max_size = min(features.shape[0], max_size)
 
-    features = normalize_features(features=features, feature_columns=feature_columns, rip_norm=rip_norm, znorm=znorm,
+    features = normalize_features(features=features, rip_norm=rip_norm, znorm=znorm,
                                   log_transform=log_transform)
 
     if len(feature_columns) == 1:
@@ -108,7 +111,7 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, output_file
     total_regions = 0
     region_dfs = []
     for chrom, chrom_annotations in annotations.groupby(annotations.columns[0]):
-        log_print('Processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
+        log_print('processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
         chrom_vector = features.loc[chrom_annotations.index].values
 
         this_chrom_peas = interface.find_peas_vector(input_vector=chrom_vector, min_score=min_score,
@@ -134,7 +137,7 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, output_file
             log_print('{} PEAs passed FDR threshold of {}.'.format(all_regions_df.shape[0], fdr), 1)
 
         if all_regions_df.shape[0] == 0:
-            print('No PEAs passed the FDR threshold!')
+            print('no PEAs passed the FDR threshold!')
         else:
             if output_filename:
                 # write_ucsc_bed_file(filename=output_filename, bed_df=all_regions_df, track_name='PEAs', description='')
@@ -143,78 +146,80 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, output_file
                 print_df_full(all_regions_df)
 
 
-# def correlation_matrix_worker(params):
-#     print('*' * 80)
-#     print('Global namespace: {}'.format(dir()))
-#     print('*' * 80)
-#
-#     fname_prefix, chrom, this_chrom_annotated = params
-#
-#     this_chrom_annotated = this_chrom_annotated.sort_values(by=['Chr', 'Start'])
-#     this_chrom_data = this_chrom_annotated.iloc[:, 6:]
-#     log_print('Pairwise correlating {} regions in chromosome {} ... '.format(this_chrom_data.shape[0],
-#                                                                              chrom), 2)
-#
-#     this_chrom_corrs = this_chrom_data.T.corr()
-#
-#     if fname_prefix:
-#         this_fname = '{}_{}.txt'.format(fname_prefix, chrom)
-#         log_print('Saving chromosome {} correlations to {} ... '.format(chrom, this_fname), 2)
-#         this_chrom_corrs.to_csv(this_fname, sep='\t')
-#         chrom_data[chrom] = this_chrom_corrs
-#     return chrom
-#
-#
-# def generate_correlation_matrices_from_annotated_peaks_multicore(annotated_peak_df,
-#                                                                  fname_prefix='',
-#                                                                  num_cores=16):
-#     print('*' * 80)
-#     print('Global namespace: {}'.format(dir()))
-#     print('*' * 80)
-#
-#     params = []
-#     for chrom, this_chrom_annotated in annotated_peak_df.groupby('Chr'):
-#         chrom = chrom.strip()
-#         if chrom != 'chrM':
-#             params.append((fname_prefix, chrom, this_chrom_annotated))
-#     corr_pool = multiprocessing.Pool(num_cores)
-#     _ = corr_pool.map(correlation_matrix_worker, params)
-#     log_print('Done correlating all chromosomes.', 1)
-#     corr_pool.close()
-#     corr_pool.join()
-#
-#
-# # def sort_df(df):
-# #     sort_index = toolbox.numerical_string_sort(df.index)
-# #     return df.loc[sort_index, sort_index]
-#
-# def find_crds_worker(params):
-#     chrom, annotations, min_score, max_pval, min_size, max_size, edge_weight_power, pvalue_target, trim_edges, maximization_target, gobig, random_seed = params
-#
-#     if len(chrom_data[chrom].shape) > 1:
-#         assert chrom_data[chrom].shape[0] == chrom_data[chrom].shape[1]
-#     num_features = chrom_data[chrom].shape[0]
-#
-#     this_chrom_regions = find_coupled_peaks_1chrom(chrom,
-#                                                    min_score=min_score,
-#                                                    max_pval=max_pval,
-#                                                    min_size=min_size,
-#                                                    max_size=max_size,
-#                                                    maximization_target=maximization_target,
-#                                                    pvalue_target=pvalue_target,
-#                                                    edge_weight_power=edge_weight_power,
-#                                                    trim_edges=trim_edges,
-#                                                    gobig=gobig,
-#                                                    random_seed=random_seed)
-#     regions_found = len(this_chrom_regions)
-#
-#     log_print('{}: extracting annotations ...'.format(chrom), 2)
-#
-#     chrom_df = generate_bed_df(this_chrom_regions, annotations)
-#
-#     log_print('{}: done.'.format(chrom), 2)
-#
-#     return chrom, regions_found, num_features, chrom_df
+def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_columns, output_filename='',
+                                    rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
+                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, tail=constants.DEFAULT_TAIL,
+                                    min_score=constants.DEFAULT_MIN_SCORE, pvalue=constants.DEFAULT_PVALUE_THRESHOLD,
+                                    fdr=constants.DEFAULT_FDR_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE,
+                                    max_size=constants.DEFAULT_MAX_SIZE, alpha=constants.DEFAULT_ALPHA,
+                                    start_diagonal=constants.DEFAULT_START_DIAGONAL,
+                                    parameter_smoothing_window_size=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE,
+                                    null_distribution_type=constants.DEFAULT_NULL_DISTRIBUTION,
+                                    random_seed=None,
+                                    ):
+    if peak_file_format == 'bed':
+        annotations, features = load_and_parse_bed_file(bed_fname=peak_filename, feature_columns=feature_columns)
+    else:
+        annotations, features = load_and_parse_peak_file(peak_fname=peak_filename, feature_columns=feature_columns)
+
+    log_print('loaded {} genomic regions from {}'.format(annotations.shape[0], peak_filename))
+
+    assert min_size >= 2
+    assert max_size >= min_size
+    assert 0 < pvalue <= 1
+    assert 0 <= min_score
+
+    max_size = min(features.shape[0], max_size)
+
+    features = normalize_features(features=features, rip_norm=rip_norm, znorm=znorm,
+                                  log_transform=log_transform)
+
+    total_regions = 0
+    region_dfs = []
+    for chrom, chrom_annotations in annotations.groupby(annotations.columns[0]):
+        log_print('processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
+        chrom_matrix = features.loc[chrom_annotations.index]
+        log_print('crrelating ...', 2)
+        chrom_corrs = chrom_matrix.T.corr().values
+
+        this_chrom_peas = interface.find_peas_matrix(input_matrix=chrom_corrs, min_score=min_score,
+                                                     max_pval=pvalue, min_size=min_size, max_size=max_size,
+                                                     maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
+                                                     tail=tail,
+                                                     quantile_normalize=False,
+                                                     edge_weight_power=alpha,
+                                                     pvalue_target=constants.DEFAULT_PVALUE_TARGET,
+                                                     max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
+                                                     num_shuffles='auto',
+                                                     null_distribution_class=null_distribution_type,
+                                                     start_diagonal=start_diagonal,
+                                                     parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                                                     parameter_filter_strength=parameter_smoothing_window_size,
+                                                     random_seed=random_seed,
+                                                     gobig=True
+                                                     )
+
+        this_chrom_peas_df = generate_bed_df(this_chrom_peas, chrom_annotations)
+        total_regions += this_chrom_peas_df.shape[0]
+        region_dfs.append(this_chrom_peas_df)
+
+    if total_regions > 0:
+        all_regions_df = pandas.concat([region_df for region_df in region_dfs if region_df.shape[0] > 0], axis=0)
+
+        if fdr is not None:
+            passfail, qvals, _, _ = multipletests(all_regions_df.pval, alpha=fdr, method='fdr_bh')
+            all_regions_df['qval'] = qvals
+            all_regions_df = all_regions_df.loc[passfail]
+            log_print('{} PEAs passed FDR threshold of {}.'.format(all_regions_df.shape[0], fdr), 1)
+
+        if all_regions_df.shape[0] == 0:
+            print('no PEAs passed the FDR threshold!')
+        else:
+            if output_filename:
+                # write_ucsc_bed_file(filename=output_filename, bed_df=all_regions_df, track_name='PEAs', description='')
+                all_regions_df.to_csv(output_filename, sep='\t')
+            else:
+                print_df_full(all_regions_df)
 
 
 def generate_bed_df(regions, annotations):

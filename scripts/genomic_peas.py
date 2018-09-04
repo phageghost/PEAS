@@ -38,11 +38,9 @@ def main():
     parser.add_argument('input_file', help='input file', type=str)
     parser.add_argument('input_file_type', help='whether the file is in BED format or HOMER format',
                         choices=('bed', 'homer'))
-
     parser.add_argument('columns',
                         help='which columns (numbered left-right starting at 0) in the BED file to use as score values. In vector mode, either a single column or a pair of columns can be specified. If a pair is specified, the second column in the pair will be subracted from the first column to generate the vector for PEAS analysis. In matrix mode, 3 or more columns must be specified for use in generating correlation matrices.',
                         type=str)
-
     parser.add_argument('--tail', '-t',
                         help='look for regions with greater than expected values (right), lower than expected values (left) or either (both)',
                         choices=('right', 'left', 'both'), default='both')
@@ -77,7 +75,7 @@ def main():
                                 type=str, default=5)
     matrix_options.add_argument('--distribution-type',
                                 help='what type of piecewise distribution to fit to the permuted data',
-                                choices=('pw_power', 'pw_linear'))
+                                choices=('pw_power', 'pw_linear'), default=constants.DEFAULT_NULL_DISTRIBUTION)
     matrix_options.add_argument('--random-seed', '-r',
                                 help='value to use to initialize psuedorandom number generator. If not specified a new seed will be chosen each time',
                                 type=float, default=None)
@@ -106,6 +104,22 @@ def main():
                                                                  max_size=args.max_size, alpha=args.alpha,
                                                                  bins=args.bins,
                                                                  output_filename=args.output)
+        else:
+            peas.genomic_regions.find_genomic_region_crds_matrix(peak_filename=args.input_file,
+                                                                 peak_file_format=args.input_file_type,
+                                                                 feature_columns=feature_columns,
+                                                                 rip_norm=args.col_norm,
+                                                                 znorm=args.z_transform,
+                                                                 log_transform=args.log_transform,
+                                                                 tail=args.tail, min_score=args.min_score,
+                                                                 pvalue=args.pvalue, fdr=args.fdr,
+                                                                 min_size=args.min_size,
+                                                                 max_size=args.max_size, alpha=args.alpha,
+                                                                 output_filename=args.output,
+                                                                 start_diagonal=args.ignore_sizes,
+                                                                 parameter_smoothing_window_size=args.parameter_smoothing_size,
+                                                                 null_distribution_type=args.distribution_type,
+                                                                 random_seed=args.random_seed)
 
 if __name__ == '__main__':
     sys.exit(main())

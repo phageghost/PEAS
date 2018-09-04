@@ -80,7 +80,7 @@ def decode_backtrack(backtrack):
             ptr = start - 1
             total_covered_peaks += end - start + 1
 
-    log_print('Found {} regions covering {} peaks'.format(len(regions), total_covered_peaks), 3)
+    log_print('found {} regions covering {} peaks'.format(len(regions), total_covered_peaks), 2)
 
     return regions
 
