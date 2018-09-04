@@ -4,42 +4,16 @@ import scipy.stats
 
 from peas.arrayfuncs import replace_nans_diagonal_means, compute_vector_trim_points, compute_matrix_trim_points, \
     create_diagonal_distance_matrix, create_data_masks
-from peas.fitapproxdistros import distributions
 from peas.utilities import log_print, gaussian_norm, validate_param
 from . import choosing
+from . import constants
 from . import region_stats
 from . import scoring
-
-DEFAULT_PVALUE_TARGET = 1e-6
-MAX_PSCORE = 744.44007192138122
-MIN_PVALUE = numpy.exp(-MAX_PSCORE)
-MAX_PVAL = 1 - 1e-100
-DEFAULT_PVALUE_CV = 0.05
-DEFAULT_PSEUDOCOUNT = 0
-
-VECTOR_SCORE_FUNCS_BY_NAME = {'mean': empdist.helper_funcs.predict_distributions_independent_means,
-                              'sum': empdist.helper_funcs.predict_distributions_independent_sums,
-                              'min': empdist.helper_funcs.predict_distributions_independent_mins,
-                              'max': empdist.helper_funcs.predict_distributions_independent_maxes}
-
-MATRIX_SCORING_FUNCS_BY_NAME = {'sum': scoring.compute_sum_table_2d,
-                                'mean': scoring.compute_mean_table_2d,
-                                'min': scoring.compute_min_table_2d,
-                                'max': scoring.compute_max_table_2d}
-
-NULL_DISTRIBUTIONS_BY_NAME = {'pw_power': distributions.PiecewiseApproxPower,
-                              'pw_linear': distributions.PiecewiseApproxLinear}
-
-DEFAULT_PARAMETER_SMOOTHING_METHOD = 'savgol'
-SAVGOL_DEFAULT_WINDOW_SIZE = 5
-DEFAULT_NULL_DISTRIBUTION = 'pw_power'
-
-DEFAULT_MAXIMIZATION_TARGET = 'p_prod'
 
 
 def find_ropes(input_data, score_method='mean', min_score=0, max_pval=None, min_size=2, max_size=None,
                trim_input=True, trim_edges=False, gobig=True, tail=None,
-               pvalue_target=DEFAULT_PVALUE_TARGET, start_diagonal=1,
+               pvalue_target=constants.DEFAULT_PVALUE_TARGET, start_diagonal=1,
                quantile_normalize=False, more_smoothing=False,
                edge_weight_constant=0, edge_weight_power=1,
                return_debug_data=False, parameter_filter_strength=0, random_seed=None):
@@ -54,21 +28,28 @@ def find_ropes(input_data, score_method='mean', min_score=0, max_pval=None, min_
         find_ropes_matrix()
 
 
+# ToDo: Replace hard-coded defaults with global constants.
 def find_ropes_vector(input_vector, min_score=0, max_pval=None, min_size=2, max_size=None,
-                      maximization_target=DEFAULT_MAXIMIZATION_TARGET,
+                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
                       tail='both',
+                      bins='auto',
                       quantile_normalize=False,
                       edge_weight_power=1,
-                      gobig=True,
-                      random_seed=None):
-    numpy.random.seed(random_seed)
+                      gobig=True):
     input_vector, trim_start, trim_end = trim_data_vector(input_vector)
+    # ToDo: move data normalization steps from genomic_regions to here so they can operate NaN-free
 
     if quantile_normalize:
         log_print('quantile-normalizing vector to standard Gaussian ...', 2)
         input_vector = gaussian_norm(input_vector)
 
-    region_scores, null_distributions = generate_score_distributions_vector(input_vector=input_vector)
+    region_scores, null_distributions = generate_score_distributions_vector(input_vector=input_vector,
+                                                                            min_size=min_size, max_size=max_size,
+                                                                            bins=bins,
+                                                                            score_func_name='mean',
+                                                                            tail=tail,
+                                                                            pseudocount=constants.DEFAULT_PSEUDOCOUNT)
+                                        
     return find_ropes_common(region_scores=region_scores,
                              null_distributions=null_distributions,
                              trim_start=trim_start,
@@ -80,19 +61,19 @@ def find_ropes_vector(input_vector, min_score=0, max_pval=None, min_size=2, max_
 
 
 def find_ropes_matrix(input_matrix,
-                      score_func_name=DEFAULT_SCORE_FUNC,
+                      score_func_name=constants.DEFAULT_SCORE_FUNC,
                       min_score=0, max_pval=None, min_size=2, max_size=None,
                       tail='both',
-                      pvalue_target=DEFAULT_PVALUE_TARGET,
-                      max_pvalue_cv=DEFAULT_PVALUE_CV,
+                      pvalue_target=constants.DEFAULT_PVALUE_TARGET,
+                      max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
                       num_shuffles='auto',
-                      null_distribution_class=DEFAULT_NULL_DISTRIBUTION,
-                      maximization_target=DEFAULT_MAXIMIZATION_TARGET,
+                      null_distribution_class=constants.DEFAULT_NULL_DISTRIBUTION,
+                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
                       edge_weight_power=1,
                       start_diagonal=1,
                       quantile_normalize=False,
-                      parameter_smoothing_method=DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                      parameter_filter_strength=SAVGOL_DEFAULT_WINDOW_SIZE,
+                      parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                      parameter_filter_strength=constants.SAVGOL_DEFAULT_WINDOW_SIZE,
                       random_seed=None,
                       gobig=True):
     numpy.random.seed(random_seed)
@@ -182,8 +163,8 @@ def generate_score_distributions_vector(input_vector, min_size, max_size,
                                         bins='auto',
                                         score_func_name='mean',
                                         tail='both',
-                                        pseudocount=DEFAULT_PSEUDOCOUNT):
-    validate_param('score_func_name', score_func_name, VECTOR_SCORE_FUNCS_BY_NAME.keys())
+                                        pseudocount=constants.DEFAULT_PSEUDOCOUNT):
+    validate_param('score_func_name', score_func_name, constants.VECTOR_SCORE_FUNCS_BY_NAME.keys())
     n = len(input_vector)
 
     log_print('computing means of all subarrays of {}-element vector ...'.format(n), 2)
@@ -194,8 +175,8 @@ def generate_score_distributions_vector(input_vector, min_size, max_size,
     singleton_distribution = empdist.EmpiricalDistribution.from_data(data=input_vector,
                                                                      bins=bins,
                                                                      pseudocount=pseudocount)
-    score_func = VECTOR_SCORE_FUNCS_BY_NAME[score_func_name]
-    print(score_func)
+    score_func = constants.VECTOR_SCORE_FUNCS_BY_NAME[score_func_name]
+
     null_distributions = score_func(input_empirical_distribution=singleton_distribution,
                                     max_sample_size=max_size))
 
@@ -209,16 +190,16 @@ def generate_score_distributions_matrix(input_matrix,
                                         score_func_name='mean',
                                         start_diagonal=1,
                                         tail='both',
-                                        pvalue_target=DEFAULT_PVALUE_TARGET,
-                                        max_pvalue_cv=DEFAULT_PVALUE_CV,
-                                        parameter_smoothing_method=DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                                        parameter_filter_strength=SAVGOL_DEFAULT_WINDOW_SIZE,
+                                        pvalue_target=constants.DEFAULT_PVALUE_TARGET,
+                                        max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
+                                        parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                                        parameter_filter_strength=constants.SAVGOL_DEFAULT_WINDOW_SIZE,
                                         num_shuffles='auto',
-                                        null_distribution_class=DEFAULT_NULL_DISTRIBUTION,
+                                        null_distribution_class=constants.DEFAULT_NULL_DISTRIBUTION,
                                         random_seed=None):
     assert input_matrix.shape[0] == input_matrix.shape[1], 'Input matrix must be square.'
-    validate_param('score_func', score_func_name, MATRIX_SCORING_FUNCS_BY_NAME.keys())
-    validate_param('null_distribution_class', null_distribution_class, NULL_DISTRIBUTIONS_BY_NAME.keys())
+    validate_param('score_func', score_func_name, constants.MATRIX_SCORING_FUNCS_BY_NAME.keys())
+    validate_param('null_distribution_class', null_distribution_class, constants.NULL_DISTRIBUTIONS_BY_NAME.keys())
     n = input_matrix.shape[0]
     # if not tail: tail = 'right' # ToDo: Adapt code to fit logsf to allow 'left' and 'both' values.
     assert tail == 'right'
@@ -240,12 +221,13 @@ def generate_score_distributions_matrix(input_matrix,
                                                                     min_region_size=min_size,
                                                                     max_region_size=max_size,
                                                                     start_diagonal=start_diagonal,
-                                                                    matrix_score_func=MATRIX_SCORING_FUNCS_BY_NAME[
+                                                                    matrix_score_func=
+                                                                    constants.MATRIX_SCORING_FUNCS_BY_NAME[
                                                                         score_func_name],
                                                                     random_seed=random_seed)
 
     null_distributions = region_stats.fit_distributions(sampled_scores=shuffled_samples,
-                                                        distribution_class=NULL_DISTRIBUTIONS_BY_NAME[
+                                                        distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[
                                                             null_distribution_class],
                                                         parameter_smoothing_method=parameter_smoothing_method,
                                                         parameter_smoothing_window_size=parameter_filter_strength)
@@ -311,7 +293,7 @@ def compute_edge_weights(region_scores, region_pvals, pval_scores, empirical_dis
     elif maximization_target == 'z':
         log_print('maximizing standard z score of p-values', 2)
         edge_weights = region_pvals.copy()
-        edge_weights[numpy.equal(region_pvals, 1)] = MAX_PVAL
+        edge_weights[numpy.equal(region_pvals, 1)] = constants.MAX_PVAL
 
         edge_weights[numpy.triu_indices(n, 1)] = -scipy.stats.norm().ppf(edge_weights[numpy.triu_indices(n, 1)])
 

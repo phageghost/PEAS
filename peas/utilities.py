@@ -1,4 +1,5 @@
 import datetime
+import sys
 
 import numpy
 import pandas
@@ -12,8 +13,17 @@ def pretty_now():
     return datetime.datetime.strftime(datetime.datetime.now(), '%Y-%b-%d %H:%M:%S')
 
 
+def eprint(*args, **kwargs):
+    """
+    Print to stderr.
+    """
+
+
+print(*args, file=sys.stderr, **kwargs)
+    
+    
 def log_print(message, tabs=1):
-    print('{}{}{}'.format(pretty_now(), '\t' * tabs, message))
+    eprint('{}{}{}'.format(pretty_now(), '\t' * tabs, message))
 
 
 def validate_param(param_name, value_received, allowable_values):
