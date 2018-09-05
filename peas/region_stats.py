@@ -26,7 +26,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     if max_region_size == 0:
         max_region_size = n
 
-    sampled_scores = {region_size: numpy.empty((n - (region_size - 1)) * num_shuffles) for region_size in
+    sampled_scores = {region_size: numpy.empty((n - (region_size-1)) * num_shuffles) for region_size in
                       range(min_region_size, max_region_size + 1)}
 
     last_time = datetime.datetime(1950, 1, 1)

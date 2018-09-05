@@ -1,4 +1,5 @@
 import numpy
+import warnings
 
 import peas
 from . import constants
@@ -82,7 +83,7 @@ def compute_mean_table_1d(vector, end_diagonal=0):
 
     ut_indices = numpy.triu_indices(n, 1)
 
-    mean_table[ut_indices] /= compute_denominator_1d(n)[ut_indices]
+    mean_table /= compute_denominator_1d(n)
 
     return mean_table
 
@@ -205,7 +206,34 @@ def _compute_sum_table_2d_py(data, start_diagonal, end_diagonal):
     return sum_table
 
 
-def compute_denominator_2d(n, start_diagonal=1):
+denominator_cache = {}
+
+
+def _compute_denominator_2d(n, start_diagonal, end_diagonal):
+    """
+    Returns an upper-triangular matrix containing the number of cells
+    in a triangular region around the diagonal with a corner at that cell, excluding
+    cells on diagonals smaller than :param start_diagonal:.
+
+    Used for converting tables of region sums to means.
+    """
+    # assert n >= 1
+    # assert start_diagonal >= 0
+
+    denom_table = numpy.zeros((n, n))
+    if start_diagonal == 0:
+        dk_idx = my_diag_indices(n, 0)
+        denom_table[dk_idx] = 1
+
+    for k in range(max(start_diagonal, 1), end_diagonal + 1):
+        dk_idx = my_diag_indices(n, k)
+        dk_prev_idx = truncate_array_tuple(my_diag_indices(n, k - 1), 0, 1)
+        denom_table[dk_idx] = denom_table[dk_prev_idx] + numpy.full(n - k, fill_value=k - start_diagonal + 1)
+
+    return denom_table
+
+
+def compute_denominator_2d(n, start_diagonal=1, end_diagonal=0):
     """
     Returns an upper-triangular matrix containing the number of cells
     in a triangular region around the diagonal with a corner at that cell, excluding
@@ -215,18 +243,20 @@ def compute_denominator_2d(n, start_diagonal=1):
     """
     assert n >= 1
     assert start_diagonal >= 0
+    if end_diagonal == 0:
+        end_diagonal = n
 
-    denom_table = numpy.zeros((n, n))
-    if start_diagonal == 0:
-        dk_idx = my_diag_indices(n, 0)
-        denom_table[dk_idx] = 1
+    index = (n, start_diagonal)
+    if index in denominator_cache:
+        # print('cache hit')
 
-    for k in range(max(start_diagonal, 1), n):
-        dk_idx = my_diag_indices(n, k)
-        dk_prev_idx = truncate_array_tuple(my_diag_indices(n, k - 1), 0, 1)
-        denom_table[dk_idx] = denom_table[dk_prev_idx] + numpy.full(n - k, fill_value=k - start_diagonal + 1)
+        return denominator_cache[index]
+    else:
+        this_denominator = _compute_denominator_2d(n=n, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
+        denominator_cache[index] = this_denominator
+        # print('cache miss')
 
-    return denom_table
+        return this_denominator
 
 
 def compute_mean_table_2d(data, start_diagonal=0, end_diagonal=0):
@@ -248,9 +278,10 @@ def compute_mean_table_2d(data, start_diagonal=0, end_diagonal=0):
     assert end_diagonal - start_diagonal > 0
 
     mean_table = compute_sum_table_2d(data, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
-    ut_indices = numpy.triu_indices(n, start_diagonal)
-
-    mean_table[ut_indices] /= compute_denominator_2d(n, start_diagonal=start_diagonal)[ut_indices]
+    # ut_indices = numpy.triu_indices(n, start_diagonal)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        mean_table /= compute_denominator_2d(n, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
 
     return mean_table
 

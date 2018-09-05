@@ -208,8 +208,7 @@ def generate_score_distributions_matrix(input_matrix,
     # Automatic determination of number of shuffles needed to achieve p-value target based on region sizes.
     if num_shuffles == 'auto':
         num_shuffles = empdist.empirical_pval.compute_number_of_permuted_data_points(target_p_value=pvalue_target,
-                                                                                     max_pvalue_cv=max_pvalue_cv) // (
-                                   n - max_size - 1)
+                                                                                     max_pvalue_cv=max_pvalue_cv) // (n - (max_size - 1))
 
     log_print(
         'constructing null models for regions up to size {} using {} permutations ...'.format(max_size,
