@@ -225,7 +225,7 @@ def _compute_denominator_2d(n, start_diagonal, end_diagonal):
         dk_idx = my_diag_indices(n, 0)
         denom_table[dk_idx] = 1
 
-    for k in range(max(start_diagonal, 1), end_diagonal + 1):
+    for k in range(max(start_diagonal, 1), end_diagonal):
         dk_idx = my_diag_indices(n, k)
         dk_prev_idx = truncate_array_tuple(my_diag_indices(n, k - 1), 0, 1)
         denom_table[dk_idx] = denom_table[dk_prev_idx] + numpy.full(n - k, fill_value=k - start_diagonal + 1)
