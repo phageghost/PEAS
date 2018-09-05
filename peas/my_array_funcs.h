@@ -1,0 +1,27 @@
+void arange(size_t, size_t, size_t*);
+size_t my_diag_indices(size_t, size_t, size_t*, size_t*);
+size_t unravel_index(size_t, size_t, size_t);
+void* get_row_ptrs(double*, size_t, size_t);
+double dot_product_vec_vec(double*, double*, size_t);
+//void openblas_dot_matrix_vec(double*,  double*, double*, size_t, size_t);
+//void openblas_dot_matrix_vec_t(double*,  double*, double*, size_t, size_t);
+//void openblas_dot_matrix_vec_add(double*,  double*, double*, size_t, size_t);
+//void openblas_dot_matrix_vec_add_t(double*,  double*, double*, size_t, size_t);
+void copy_vec(double*, double*, size_t);
+void mult_vec_scalar(double*, double, double*, size_t);
+void mult_assign_vec_scalar(double*, double, size_t);
+void mult_vec_vec(double*, double*, double*, size_t);
+void mult_assign_vec_vec(double*, double*, size_t);
+void div_vec_scalar(double*, double, double*, size_t);
+void div_assign_vec_scalar(double*, double, size_t);
+void add_vec_scalar(double*, double, double*, size_t);
+void add_assign_vec_scalar(double*, double, size_t);
+void add_vec_vec(double*, double*, double*, size_t);
+void add_assign_vec_vec(double*, double*, size_t);
+double sum_vec(double* , size_t);
+void print_vec_d(double*, size_t);
+void print_vec_l(long*, size_t);
+void print_matrix(double**, size_t, size_t);
+void fill_vec(double*, size_t, double);
+void fill_matrix(double*, size_t, size_t, double);
+	

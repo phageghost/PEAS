@@ -14,10 +14,14 @@ print()
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-extensions = [Extension('peas.scoring_funcs_cython',
+include_dirs = [numpy.get_include()]
+
+extensions = cythonize([Extension('peas.scoring_funcs_cython',
                         ['peas/scoring_funcs_cython.pyx', 'peas/scoring_funcs_c.c', 'peas/my_array_funcs.c'],
                         extra_compile_args=['-std=gnu99', '-O3', '-march=native', '-finline-functions'],
-                        include_dirs=[numpy.get_include()])]
+                        include_dirs=include_dirs)])
+# extensions = cythonize('peas/scoring_funcs_cython.pyx')
+
 
 print(extensions[0].include_dirs)
 setuptools.setup(name='PEAS',
@@ -30,7 +34,7 @@ setuptools.setup(name='PEAS',
                  license='MIT',
                  packages=['peas'],
                  scripts=['scripts/genomic_peas.py'],
-                 ext_modules=cythonize('peas/scoring_funcs_cython.pyx'),
+                 ext_modules=extensions,
                  include_dirs=[numpy.get_include()],
                  install_requires=['numpy', 'datetime', 'scipy', 'statsmodels', 'pandas', 'matplotlib', 'seaborn',
                                    'empdist'],

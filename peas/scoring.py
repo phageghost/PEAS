@@ -1,10 +1,15 @@
 import numpy
 
-import peas.fitapproxdistros.constants
+import peas
+from . import constants
 from peas.arrayfuncs import my_diag_indices, truncate_array_tuple
 
-DEFAULT_DISTRO_CLASS = peas.fitapproxdistros.distributions.PiecewiseApproxLinear
+from . import scoring_funcs_cython
 
+DEFAULT_DISTRO_CLASS = peas.fitapproxdistros.distributions.PiecewiseApproxLinear
+# ToDo: Simplify computation of denominator
+# ToDo: Make C versions of other scoring functions
+# ToDo: Integrate 1D functions with 2D functions?
 
 def compute_sum_table_1d(vector, end_diagonal=0):
     """
@@ -141,13 +146,6 @@ def compute_max_table_1d(vector, end_diagonal=0):
 
 
 def compute_sum_table_2d(data, start_diagonal=0, end_diagonal=0):
-    """
-    Returns an upper-triangular matrix where each cell contains the sum of a square
-    subset of :param:`data`centered on the diagonal with a corner in that cell, excluding
-    the diagonal itself.
-
-    Uses implicit recursion to do this efficiently.
-    """
     assert data.shape[0] == data.shape[1]
     n = data.shape[0]
     assert n > 0
@@ -155,9 +153,31 @@ def compute_sum_table_2d(data, start_diagonal=0, end_diagonal=0):
 
     if end_diagonal == 0:
         end_diagonal = n
-
     assert end_diagonal - start_diagonal > 0
 
+    data = numpy.array(data, dtype=float, order='C')
+
+    if constants.USE_C:
+        return _compute_sum_table_2d_c(data=data, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
+    else:
+        return _compute_sum_table_2d_py(data=data, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
+
+
+def _compute_sum_table_2d_c(data, start_diagonal, end_diagonal):
+
+    return scoring_funcs_cython.compute_sum_table_2d(data_matrix=data, start_diagonal=start_diagonal,
+                                                     end_diagonal=end_diagonal)
+
+
+def _compute_sum_table_2d_py(data, start_diagonal, end_diagonal):
+    """
+    Returns an upper-triangular matrix where each cell contains the sum of a square
+    subset of :param:`data`centered on the diagonal with a corner in that cell, excluding
+    the diagonal itself.
+
+    Uses implicit recursion to do this efficiently.
+    """
+    n = data.shape[0]
     sum_table = numpy.zeros((n, n))
 
     # Initialize: copy over the 1st diagonal
