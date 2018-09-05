@@ -56,7 +56,7 @@ def clean_array(arr):
 
 def shuffle_matrix(matrix):
     """
-    Returns a srandomly huffled copy of 2D array :param matrix: that preserves row and column affiliations
+    Returns a randomly huffled copy of 2D array :param matrix: that preserves row and column affiliations
 
     :param matrix:
     :return:

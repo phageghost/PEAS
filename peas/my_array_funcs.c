@@ -161,6 +161,14 @@ void div_vec_scalar(double* source_vec, double scalar, double* dest_vec, size_t 
 }
 
 
+void div_assign_vec_vec(double* vec_a, double* vec_b, size_t num_elements){
+	size_t element_idx;
+	for (element_idx=0; element_idx < num_elements; element_idx++){
+		vec_a[element_idx] /= vec_b[element_idx];
+	}
+}
+
+
 void add_vec_scalar(double* source_vec, double scalar, double* dest_vec, size_t num_elements){
 	size_t element_idx;
 	for (element_idx=0; element_idx < num_elements; element_idx++){
@@ -241,4 +249,48 @@ void fill_vec(double* vec, size_t num_elements, double fill_value){
 		// printf("%f ", vec[element_idx]);
 		vec[element_idx] = fill_value;
 	}
-}	
+}
+
+void shuffle_array_d(double* arr, size_t n, int random_seed)
+// A function to generate a random permutation of arr[]
+{
+    // Use a different seed value so that we don't get same
+    // result each time we run this program
+    srand(random_seed);
+
+    // Start from the last element and swap one by one. We don't
+    // need to run for the first element that's why i > 0
+    for (size_t i = n-1; i > 0; i--)
+    {
+        // Pick a random index from 0 to i
+        size_t j = rand() % (i+1);
+
+        // Swap arr[i] with the element at random index
+        double temp = arr[j];
+        arr[j] = arr[i];
+        arr[i] = temp;
+//        swap(&arr[i], &arr[j]);
+    }
+}
+
+void shuffle_array_st(size_t* arr, size_t n, int random_seed)
+// A function to generate a random permutation of arr[]
+{
+    // Use a different seed value so that we don't get same
+    // result each time we run this program
+    srand(random_seed);
+
+    // Start from the last element and swap one by one. We don't
+    // need to run for the first element that's why i > 0
+    for (size_t i = n-1; i > 0; i--)
+    {
+        // Pick a random index from 0 to i
+        size_t j = rand() % (i+1);
+
+        // Swap arr[i] with the element at random index
+        size_t temp = arr[j];
+        arr[j] = arr[i];
+        arr[i] = temp;
+//        swap(&arr[i], &arr[j]);
+    }
+}
