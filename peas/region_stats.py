@@ -56,7 +56,7 @@ def fit_distributions(sampled_scores, distribution_class=DEFAULT_DISTRO_CLASS,
     empirical distribution objects representing samples of scores of regions
     of that size taken from permuted versions of :param:`matrix`.
     """
-    log_print('Fitting distributions of class {}'.format(distribution_class), 2)
+    log_print('fitting distributions of class {}'.format(distribution_class), 2)
     sizes = sorted(sampled_scores.keys())
 
     fit_params = fit_distros(sampled_scores, distribution_class=distribution_class,

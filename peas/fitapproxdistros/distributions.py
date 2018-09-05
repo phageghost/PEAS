@@ -110,8 +110,7 @@ class PiecewiseApproxLinearDirect(PiecewiseEmpiricalApprox):
         return numpy.piecewise(x, [x < inflection_point], [lambda x: 0, lambda x: slope * (x - inflection_point)])
 
     @classmethod
-    def fit(cls, data, is_sorted=False, max_pvalue_std_error=0.05):
-        min_val, max_val = data.min(), data.max()
+    def fit(cls, data, is_sorted=False):
         data_mean = data.mean()
         endpoint = compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True)
         inflection_point = data_mean
@@ -147,7 +146,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
             x < :param:`inflection_point`: 0
             x >= :param:`inflection_point`: :param:`scale` * (:param:`x` - :param:`inflection_point`)**:param:`power`
         """
-        assert inflection_point < x[-1], 'Inflection point must be smaller than largest x value to avoid all zeros'
+        # assert inflection_point < x[-1], 'Inflection point must be smaller than largest x value to avoid all zeros'
         return numpy.piecewise(x, [x < inflection_point],
                                [lambda x: 0, lambda x: scale * (x - inflection_point) ** power])
 
@@ -165,7 +164,6 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
         inflection_point, power = res.x
 
         first_pass_ys = cls._piecewise_logsf(fit_xs, inflection_point, power, scale=-1)
-        # scale = - (fit_ys[-1] / first_pass_ys[-1])
         scale = -(fit_ys.mean() / first_pass_ys.mean())
 
         return inflection_point, power, scale

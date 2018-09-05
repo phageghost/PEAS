@@ -179,7 +179,7 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
     for chrom, chrom_annotations in annotations.groupby(annotations.columns[0]):
         log_print('processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
         chrom_matrix = features.loc[chrom_annotations.index]
-        log_print('crrelating ...', 2)
+        log_print('correlating ...', 2)
         chrom_corrs = chrom_matrix.T.corr().values
 
         this_chrom_peas = interface.find_peas_matrix(input_matrix=chrom_corrs, min_score=min_score,

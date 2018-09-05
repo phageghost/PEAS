@@ -1,4 +1,7 @@
+import numpy
 import setuptools
+from Cython.Build import cythonize
+from setuptools.extension import Extension
 
 VER = '0.0.1'
 AUTHOR = 'Dylan Skola'
@@ -11,6 +14,12 @@ print()
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+extensions = [Extension('peas.scoring_funcs_cython',
+                        ['peas/scoring_funcs_cython.pyx', 'peas/scoring_funcs_c.c', 'peas/my_array_funcs.c'],
+                        extra_compile_args=['-std=gnu99', '-O3', '-march=native', '-finline-functions'],
+                        include_dirs=[numpy.get_include()])]
+
+print(extensions[0].include_dirs)
 setuptools.setup(name='PEAS',
                  version=VER,
                  description=' Proximal Enrichment By Approximated Sampling  ',
@@ -21,6 +30,8 @@ setuptools.setup(name='PEAS',
                  license='MIT',
                  packages=['peas'],
                  scripts=['scripts/genomic_peas.py'],
+                 ext_modules=cythonize('peas/scoring_funcs_cython.pyx'),
+                 include_dirs=[numpy.get_include()],
                  install_requires=['numpy', 'datetime', 'scipy', 'statsmodels', 'pandas', 'matplotlib', 'seaborn',
                                    'empdist'],
                  zip_safe=False,
