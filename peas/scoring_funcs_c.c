@@ -176,6 +176,6 @@ void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t s
             mean_rows[row_idx][col_idx] /= cumulant;
         }
     }
-
+    free(mean_rows);
     return;
 }
