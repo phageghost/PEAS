@@ -29,7 +29,6 @@ from . import scoring
 
 # ToDo: Add command-line script to process non-genomic CSV files.
 
-
 def find_peas_vector(input_vector, min_score=constants.DEFAULT_MIN_SCORE, max_pval=constants.DEFAULT_PVALUE_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE, max_size=constants.DEFAULT_MAX_SIZE,
                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
                      tail=constants.DEFAULT_TAIL,
