@@ -89,11 +89,8 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
     log_print('Loaded {} genomic regions from {}'.format(annotations.shape[0], peak_filename))
 
     assert min_size >= 2
-    assert max_size >= min_size
     assert 0 < pvalue <= 1
     assert 0 <= min_score
-
-    max_size = min(features.shape[0], max_size)
 
     features = normalize_features(features=features, rip_norm=rip_norm, znorm=znorm,
                                   log_transform=log_transform)
@@ -165,11 +162,8 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
     log_print('loaded {} genomic regions from {}'.format(annotations.shape[0], peak_filename))
 
     assert min_size >= 2
-    assert max_size >= min_size
     assert 0 < pvalue <= 1
     assert 0 <= min_score
-
-    max_size = min(features.shape[0], max_size)
 
     features = normalize_features(features=features, rip_norm=rip_norm, znorm=znorm,
                                   log_transform=log_transform)

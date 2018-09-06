@@ -11,38 +11,49 @@ from . import region_stats
 from . import scoring
 
 
-def find_peas(input_data, score_method='mean', min_score=0, max_pval=None, min_size=2, max_size=None,
-              trim_input=True, trim_edges=False, gobig=True, tail=None,
-              pvalue_target=constants.DEFAULT_PVALUE_TARGET, start_diagonal=1,
-              quantile_normalize=False, more_smoothing=False,
-              edge_weight_constant=0, edge_weight_power=1,
-              return_debug_data=False, parameter_filter_strength=0, random_seed=None):
-    assert len(input_data.shape <= 2), 'Input array has too many dimensions (max 2).'
+# def find_peas(input_data, score_method='mean', min_score=0, max_pval=None, min_size=2, max_size=None,
+#               trim_input=True, trim_edges=False, gobig=True, tail=None,
+#               pvalue_target=constants.DEFAULT_PVALUE_TARGET, start_diagonal=1,
+#               quantile_normalize=False, more_smoothing=False,
+#               edge_weight_constant=0, edge_weight_power=1,
+#               return_debug_data=False, parameter_filter_strength=0, random_seed=None):
+#     assert len(input_data.shape <= 2), 'Input array has too many dimensions (max 2).'
+#
+#     if len(input_data.shape) == 1:
+#         log_print('Input is 1D vector')
+#         find_peas_vector()
+#
+#     elif len(input_data.shape) == 2:
+#         log_print('Input is 2D matrix')
+#         find_peas_matrix()
 
-    if len(input_data.shape) == 1:
-        log_print('Input is 1D vector')
-        find_peas_vector()
-
-    elif len(input_data.shape) == 2:
-        log_print('Input is 2D matrix')
-        find_peas_matrix()
+# ToDo: Add command-line script to process non-genomic CSV files.
 
 
-# ToDo: Replace hard-coded defaults with global constants.
-def find_peas_vector(input_vector, min_score=0, max_pval=None, min_size=2, max_size=constants.DEFAULT_MAX_SIZE,
+def find_peas_vector(input_vector, min_score=constants.DEFAULT_MIN_SCORE, max_pval=constants.DEFAULT_PVALUE_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE, max_size=constants.DEFAULT_MAX_SIZE,
                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
-                     tail='both',
-                     bins='auto',
+                     tail=constants.DEFAULT_TAIL,
+                     bins=constants.DEFAULT_BINS,
                      quantile_normalize=False,
-                     edge_weight_power=1,
+                     edge_weight_power=constants.DEFAULT_ALPHA,
                      gobig=True):
 
     input_vector, trim_start, trim_end = trim_data_vector(input_vector)
+    n = len(input_vector)
     # ToDo: move data normalization steps from genomic_regions to here so they can operate NaN-free
 
     if quantile_normalize:
         log_print('quantile-normalizing vector to standard Gaussian ...', 2)
         input_vector = gaussian_norm(input_vector)
+
+    half_vector_length = n // 2
+    if max_size > half_vector_length:
+        log_print('specified max size of {} is too large, setting to half vector length {}'.format(max_size, half_vector_length))
+        max_size = half_vector_length
+    elif not max_size:
+        max_size = n // constants.DEFAULT_MAX_SIZE_FACTOR
+
+    assert max_size >= min_size
 
     region_scores, null_distributions = generate_score_distributions_vector(input_vector=input_vector,
                                                                             min_size=min_size, max_size=max_size,
@@ -77,16 +88,23 @@ def find_peas_matrix(input_matrix,
                      random_seed=None,
                      gobig=True):
 
-    assert input_matrix.shape[0] == input_matrix.shape[1], 'Input matrix must be square.'
+    assert input_matrix.shape[0] == input_matrix.shape[1], 'input matrix must be square.'
 
     trimmed_matrix, row_start_trim_point, row_end_trim_point, col_start_trim_point, col_end_trim_point = trim_data_matrix(
         input_matrix)
     n = trimmed_matrix.shape[0]
 
+    half_matrix_size = n // 2
+
     if not max_size:
-        max_size = n // 2
-    else:
-        max_size = min(max_size, n)
+        max_size = n // constants.DEFAULT_MAX_SIZE_FACTOR
+    elif max_size > half_matrix_size:
+        log_print(
+                'specified max size of {} is too large for trimmed matrix of size {} x {}, setting to half matrix size {}'.format(
+                    max_size, n, n, half_matrix_size))
+        max_size = half_matrix_size
+
+    assert max_size >= min_size
     assert start_diagonal < min_size
 
     trimmed_matrix = replace_nans_diagonal_means(trimmed_matrix, start_diagonal=start_diagonal,
