@@ -19,17 +19,18 @@ class PiecewiseEmpiricalApprox():
         if not is_sorted:
             data = numpy.sort(data)
 
-        min_val = data.min()
-        data_mean = data.mean()
+        data_min = data.min()
+        midpoint = data.mean()
         endpoint = compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True)
 
-        if endpoint <= data_mean:
-            raise ValueError(
-                'Minimum data value that meets target p-value error threshold of {} is {}, which is below the mean of {}, therefore piecewise approximation will not work. Try generating more empirical samples or increasing the error tolerance.'.format(
-                    max_pvalue_std_error, endpoint, data_mean))
+        if endpoint <= midpoint:
+            raise Warning(
+                'Minimum data value that meets target p-value error threshold of {} is {}, which is below the mean of {}, therefore piecewise approximation may not work. Try generating more empirical samples or increasing the error tolerance.'.format(
+                    max_pvalue_std_error, endpoint, midpoint))
+            midpoint = (endpoint + data_min) / 2
 
-        fit_xs = numpy.concatenate((numpy.linspace(min_val, data_mean, num=interp_points),
-                                    numpy.linspace(data_mean, endpoint, num=interp_points)))
+        fit_xs = numpy.concatenate((numpy.linspace(data_min, midpoint, num=interp_points),
+                                    numpy.linspace(midpoint, endpoint, num=interp_points)))
         fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
 
         return fit_xs, fit_ys

@@ -2,10 +2,10 @@ import datetime
 
 import numpy
 
-from peas import scoring
+from . import scoring
+from . import constants
+from . import scoring_funcs_cython
 from peas.arrayfuncs import shuffle_matrix, my_diag_indices
-from peas.fitapproxdistros.constants import DEFAULT_DISTRO_CLASS, SAVGOL_DEFAULT_WINDOW_SIZE, \
-    DEFAULT_PARAMETER_SMOOTHING_METHOD, MIN_PVALUE
 from peas.fitapproxdistros.helper_funcs import fit_distros
 from peas.utilities import log_print
 
@@ -36,8 +36,14 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
         if elapsed_seconds > MIN_REPORTING_TIME:
             log_print('permutation {} of {}'.format(shuffle_idx + 1, num_shuffles), 3)
             last_time = cur_time
-        matrix = shuffle_matrix(matrix)
-        scores = matrix_score_func(matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size)
+
+        if constants.USE_C:
+            # ToDo: Clean up random seed stuff in C
+            scores = scoring_funcs_cython.compute_mean_table_2d_shuffled(data_matrix=matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size, random_seed=0) # Keep random_seed as 0 otherwise all shuffles will be the same
+        else:
+            matrix = shuffle_matrix(matrix)
+            scores = matrix_score_func(matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size)
+
         for region_size in range(min_region_size, max_region_size + 1):
             diag_sample = numpy.diag(v=scores, k=region_size - 1)
             assert len(diag_sample) == n - (region_size - 1)
@@ -48,9 +54,9 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     return sampled_scores
 
 
-def fit_distributions(sampled_scores, distribution_class=DEFAULT_DISTRO_CLASS,
-                      parameter_smoothing_method=DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                      parameter_smoothing_window_size=SAVGOL_DEFAULT_WINDOW_SIZE):
+def fit_distributions(sampled_scores, distribution_class=constants.DEFAULT_DISTRO_CLASS,
+                      parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                      parameter_smoothing_window_size=constants.SAVGOL_DEFAULT_WINDOW_SIZE):
     """
     Given a matrix of values, returns a dictionary, keyed by region size, of
     empirical distribution objects representing samples of scores of regions
@@ -81,7 +87,7 @@ def compute_pscores(region_scores, null_distributions, tail):
                                               diagonal_start=min_size - 1,
                                               diagonal_end=max_size,
                                               tail=tail)
-        pval_scores = -numpy.log(numpy.maximum(region_pvals, MIN_PVALUE))
+        pval_scores = -numpy.log(numpy.maximum(region_pvals, constants.MIN_PVALUE))
 
     else:
         pval_scores = compute_pscores_matrix(data_matrix=region_scores,

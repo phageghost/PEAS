@@ -1,6 +1,7 @@
 #include <stdlib.h>	
 #include <stdio.h>
 //#include <cblas.h>
+#include <time.h>
 #include "my_array_funcs.h"
 
 // #define printf PySys_WriteStdout
@@ -278,7 +279,14 @@ void shuffle_array_st(size_t* arr, size_t n, int random_seed)
 {
     // Use a different seed value so that we don't get same
     // result each time we run this program
-    srand(random_seed);
+    if (random_seed == 0)
+    {
+        srand(time(NULL));
+    }
+    else
+    {
+        srand(random_seed);
+    }
 
     // Start from the last element and swap one by one. We don't
     // need to run for the first element that's why i > 0

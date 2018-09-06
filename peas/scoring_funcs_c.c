@@ -27,7 +27,7 @@ void c_compute_sum_table_2d(double* data, size_t matrix_size, size_t start_diago
 	data_rows = get_row_ptrs(data, matrix_size, matrix_size);
 
     for (k = start_diagonal; k < end_diagonal; k++){
-        for (row_idx = 0; row_idx < end_diagonal - k; row_idx++){
+        for (row_idx = 0; row_idx < matrix_size - k; row_idx++){
 //            printf("%zu", row_idx);
             col_idx = row_idx + k;
             sum_rows[row_idx][col_idx] = 0;
@@ -80,7 +80,7 @@ void c_compute_sum_table_2d_shuffled(double* data, size_t matrix_size, size_t st
 	data_rows = get_row_ptrs(data, matrix_size, matrix_size);
 
     for (k = start_diagonal; k < end_diagonal; k++){
-        for (row_idx = 0; row_idx < end_diagonal - k; row_idx++){
+        for (row_idx = 0; row_idx < matrix_size - k; row_idx++){
 //            this_cell = 0;
 //            printf("%zu", row_idx);
             col_idx = row_idx + k;
@@ -116,7 +116,7 @@ void generate_2d_denominator_table(size_t n, size_t start_diagonal, size_t end_d
 
     double cumulant = 0;
 
-    for (size_t diag_idx = start_diagonal; diag_idx < end_diagonal; diag_idx++)
+    for (size_t diag_idx = start_diagonal; diag_idx < n; diag_idx++)
     {
         cumulant += diag_idx - start_diagonal + 1;
         for (size_t row_idx = 0; row_idx < n - diag_idx; row_idx++)
