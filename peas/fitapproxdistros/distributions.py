@@ -15,13 +15,14 @@ def cosine_sim(X, Y):
 
 class PiecewiseEmpiricalApprox():
     @classmethod
-    def _compute_empirical_logsf(cls, data, max_pvalue_std_error=0.05, interp_points=50, is_sorted=False):
+    def _compute_empirical_logsf(cls, data, support_range, max_pvalue_std_error=0.05, interp_points=100, is_sorted=False):
         if not is_sorted:
             data = numpy.sort(data)
 
-        data_min = data.min()
-        midpoint = data.mean()
-        endpoint = compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True)
+        support_min, support_max = support_range
+        x_min = max(data.min(), support_min)
+        # midpoint = data.mean()
+        x_max = min(compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True), support_max)
 
         if endpoint <= midpoint:
             raise Warning(
@@ -29,8 +30,9 @@ class PiecewiseEmpiricalApprox():
                     max_pvalue_std_error, endpoint, midpoint))
             midpoint = (endpoint + data_min) / 2
 
-        fit_xs = numpy.concatenate((numpy.linspace(data_min, midpoint, num=interp_points),
-                                    numpy.linspace(midpoint, endpoint, num=interp_points)))
+        # fit_xs = numpy.concatenate((numpy.linspace(data_min, midpoint, num=interp_points),
+                                    # numpy.linspace(midpoint, endpoint, num=interp_points)))
+        fit_xs = numpy.linspace(x_min, x_max, num=interp_points)
         fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
 
         return fit_xs, fit_ys
@@ -60,32 +62,29 @@ class PiecewiseApproxLinear(PiecewiseEmpiricalApprox):
             and rises linearly with slope :param:`slope` for all points > :param:`inflection_point`
         """
         return numpy.piecewise(x, [x < inflection_point], [lambda x: 0, lambda x: slope * (x - inflection_point)])
-
+    
     @classmethod
-    def fit(cls, data, is_sorted=False, max_pvalue_std_error=0.05, interp_points=50,
-            initial_inflection_point=None, initial_slope=500):
-        if not is_sorted:
-            data = numpy.sort(data)
+    def fit_with_existing_empirical_logsf(cls, fit_xs, fit_ys, x0, optimization_kwargs):
 
-        min_val, max_val = data.min(), data.max()
-        data_mean = data.mean()
-        endpoint = compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True)
-
-        if endpoint <= data_mean:
-            raise ValueError(
-                'Minimum data value that meets target p-value error threshold of {} is {}, which is below the mean of {}, therefore piecewise linear approximation will not work. Try generating more empirical samples or increasing the error tolerance.'.format(
-                    max_pvalue_std_error, endpoint, initial_inflection_point))
+        p, e = scipy.optimize.curve_fit(cls._piecewise_logsf, fit_xs, fit_ys,
+                                        p0=x0)
+        return p    
+        
+    @classmethod
+    def fit(cls, data, support_range, is_sorted=False, max_pvalue_std_error=0.05, interp_points=100,
+            initial_inflection_point=None, initial_slope=500):        
 
         fit_xs = numpy.concatenate((numpy.linspace(min_val, data_mean, num=interp_points),
                                     numpy.linspace(data_mean, endpoint, num=interp_points)))
         fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
+        
+        fit_xs, fit_ys = cls._compute_empirical_logsf(data=data, support_range=support_range, max_pvalue_std_error=max_pvalue_std_error, interp_points=interp_points, is_sorted=is_sorted)
 
         if initial_inflection_point == None:
             initial_inflection_point = data_mean
+            
+        return cls.fit_with_existing_empirical_logsf(fit_xs, fit_ys, x0=(initial_inflection_point, initial_slope))
 
-        p, e = scipy.optimize.curve_fit(cls._piecewise_logsf, fit_xs, fit_ys,
-                                        p0=numpy.array([initial_inflection_point, initial_slope]))
-        return p
 
     def logsf(self, x):
         return self._piecewise_logsf(x, self.inflection_point, self.slope)
@@ -110,6 +109,7 @@ class PiecewiseApproxLinearDirect(PiecewiseEmpiricalApprox):
         """
         return numpy.piecewise(x, [x < inflection_point], [lambda x: 0, lambda x: slope * (x - inflection_point)])
 
+        
     @classmethod
     def fit(cls, data, is_sorted=False):
         data_mean = data.mean()
@@ -157,7 +157,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
 
         res = scipy.optimize.basinhopping(func=cls._generate_obj_func(fit_xs, fit_ys),
                                           x0=numpy.array([initial_inflection_point, initial_power]),
-                                          minimizer_kwargs={'bounds':((-numpy.inf, fit_xs[-1] - 1e-4),
+                                          minimizer_kwargs={'bounds':((-numpy.inf, fit_xs[-1] - 1e-6),
                                                             (1, numpy.inf)),
                                                             'method':'L-BFGS-B'},
                                           **optimization_kwargs
@@ -170,7 +170,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
         return inflection_point, power, scale
 
     @classmethod
-    def fit(cls, data, is_sorted=False, max_pvalue_std_error=0.05, interp_points=50,
+    def fit(cls, data, support_range, is_sorted=False, max_pvalue_std_error=0.05, interp_points=50,
             x0=(None, 1.2), optimization_kwargs={}):
 
         initial_inflection_point, initial_power = x0
@@ -178,7 +178,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
         if not is_sorted:
             data = numpy.sort(data)
 
-        fit_xs, fit_ys = cls._compute_empirical_logsf(data, max_pvalue_std_error=max_pvalue_std_error,
+        fit_xs, fit_ys = cls._compute_empirical_logsf(data, support_range=support_range,max_pvalue_std_error=max_pvalue_std_error,
                                                       interp_points=interp_points, is_sorted=True)
 
         if initial_inflection_point is None:
@@ -194,6 +194,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
             test_ys = cls._piecewise_logsf(x=fit_xs, inflection_point=inflection_point, power=power, scale=-1)
 
             score = -cosine_sim(fit_ys, test_ys)
+            print('inflection point {}, power {}, score {}'.format(inflection_point, power, score))
 
             if numpy.isnan(score) or numpy.isinf(score):
                 return numpy.inf

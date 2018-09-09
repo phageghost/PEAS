@@ -23,6 +23,7 @@ def smooth_parameters(param_dict, parameter_smoothing_window_size=constants.SAVG
 
 
 def fit_distros(shuffled_samples, distribution_class,
+                support_ranges,
                 max_pvalue_std_error=constants.DEFAULT_MAX_PVALUE_SE,
                 parameter_smoothing_method=None,
                 parameter_smoothing_window_size=constants.SAVGOL_DEFAULT_WINDOW_SIZE, fit_kwargs={}):
@@ -35,7 +36,7 @@ def fit_distros(shuffled_samples, distribution_class,
     fit_params = {}
     for region_size in sizes:
         # log_print('size {}, min score: {}, mean score: {}, max score: {}'.format(region_size, sampled_scores[region_size].min(), sampled_scores[region_size].mean(), sampled_scores[region_size].max()),3)
-        this_fit_params = distribution_class.fit(shuffled_samples[region_size],
+        this_fit_params = distribution_class.fit(shuffled_samples[region_size], support_range=support_ranges[region_size],
                                                  max_pvalue_std_error=max_pvalue_std_error, **fit_kwargs)
         fit_params[region_size] = this_fit_params
         log_print('size: {} fit parameters: {}'.format(region_size, this_fit_params), 3)
