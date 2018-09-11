@@ -1,5 +1,6 @@
 import pandas
 from scipy.signal import savgol_filter
+import scipy.stats
 
 from peas.utilities import log_print, force_odd
 from . import constants
@@ -42,3 +43,11 @@ def fit_distros(shuffled_samples, distribution_class,
         log_print('size: {} fit parameters: {}'.format(region_size, this_fit_params), 3)
 
     return smooth_parameters(fit_params, parameter_smoothing_window_size=parameter_smoothing_window_size)
+
+    
+def compute_expected_unique_samples(total_objects, number_samples):  
+    """
+    Return the expected number of unique items from a set of size :param total_objects:
+    in a sample of size :param number_samples: with replacement.
+    """
+    return total_objects - scipy.stats.binom.pmf(n=number_samples, p=1/total_objects, k=0) * total_objects
