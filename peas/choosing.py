@@ -24,7 +24,6 @@ def find_maximal_path(edge_weights, row_masks, col_masks, gobig=True):
     backtrack[0] = -1
 
     for i in range(1, n):
-
         # print('col_mask: {}'.format(col_masks[i]))
         if len(col_masks[i]) > 0:
             above_vec = edge_weights[col_masks[i], i]

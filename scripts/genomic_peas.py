@@ -122,5 +122,6 @@ def main():
                                                                  null_distribution_type=args.distribution_type,
                                                                  random_seed=args.random_seed)
 
+
 if __name__ == '__main__':
     sys.exit(main())

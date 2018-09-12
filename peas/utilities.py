@@ -18,8 +18,8 @@ def eprint(*args, **kwargs):
     Print to stderr.
     """
     print(*args, file=sys.stderr, **kwargs)
-    
-    
+
+
 def log_print(message, tabs=1):
     eprint('{}{}{}'.format(pretty_now(), '\t' * tabs, message))
 

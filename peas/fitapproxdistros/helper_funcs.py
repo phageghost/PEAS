@@ -40,24 +40,24 @@ def fit_distros(shuffled_samples, distribution_class,
     for region_size in region_sizes:
         # log_print('size {}, min score: {}, mean score: {}, max score: {}'.format(region_size, sampled_scores[region_size].min(), sampled_scores[region_size].mean(), sampled_scores[region_size].max()),3)
         universe_size = scipy.special.binom(matrix_size, region_size - start_diagonal + 1)
-        num_unique_samples = compute_expected_unique_samples(total_items=universe_size, number_samples=len(shuffled_samples[region_size]))
-        this_fit_params = distribution_class.fit(shuffled_samples[region_size], support_range=support_ranges[region_size],
+        num_unique_samples = compute_expected_unique_samples(total_items=universe_size,
+                                                             number_samples=len(shuffled_samples[region_size]))
+        this_fit_params = distribution_class.fit(shuffled_samples[region_size],
+                                                 support_range=support_ranges[region_size],
                                                  max_pvalue_cv=max_pvalue_std_error, **fit_kwargs)
         fit_params[region_size] = this_fit_params
         log_print('region size: {}, fit parameters: {}'.format(region_size, this_fit_params), 3)
 
     return smooth_parameters(fit_params, parameter_smoothing_window_size=parameter_smoothing_window_size)
 
-    
-def compute_expected_unique_samples(total_items, number_samples):  
+
+def compute_expected_unique_samples(total_items, number_samples):
     """
     Return the expected number of unique items from a set of size :param total_items:
     in a sample of size :param number_samples: with replacement.
     """
-    a = (total_items-1) / total_items 
-    if a < 1.0: # avoid numerical overflow at very high values of total_items.
-        return total_items - total_items * a**number_samples
+    a = (total_items - 1) / total_items
+    if a < 1.0:  # avoid numerical overflow at very high values of total_items.
+        return total_items - total_items * a ** number_samples
     else:
         return number_samples
-
-    

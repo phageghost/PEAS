@@ -1,13 +1,15 @@
-import numpy
 import warnings
 
-import peas
-from . import constants
-from peas.arrayfuncs import my_diag_indices, truncate_array_tuple
+import numpy
 
+import peas
+from peas.arrayfuncs import my_diag_indices, truncate_array_tuple
+from . import constants
 from . import scoring_funcs_cython
 
 DEFAULT_DISTRO_CLASS = peas.fitapproxdistros.distributions.PiecewiseApproxLinear
+
+
 # ToDo: Simplify computation of denominator
 # ToDo: Make C versions of other scoring functions
 # ToDo: Integrate 1D functions with 2D functions?
@@ -165,7 +167,6 @@ def compute_sum_table_2d(data, start_diagonal=0, end_diagonal=0):
 
 
 def _compute_sum_table_2d_c(data, start_diagonal, end_diagonal):
-
     return scoring_funcs_cython.compute_sum_table_2d(data_matrix=data, start_diagonal=start_diagonal,
                                                      end_diagonal=end_diagonal)
 
@@ -206,7 +207,7 @@ def _compute_sum_table_2d_py(data, start_diagonal, end_diagonal):
     return sum_table
 
 
-denominator_cache = {} # so hacky
+denominator_cache = {}  # so hacky
 
 
 def _compute_denominator_2d(n, start_diagonal, end_diagonal):
@@ -285,6 +286,7 @@ def compute_mean_table_2d(data, start_diagonal=0, end_diagonal=0):
 
     return mean_table
 
+
 def compute_mean_table_2d_shuffled(data, start_diagonal, end_diagonal):
     assert constants.USE_C
     assert data.shape[0] == data.shape[1]
@@ -296,7 +298,8 @@ def compute_mean_table_2d_shuffled(data, start_diagonal, end_diagonal):
         end_diagonal = n
 
     assert end_diagonal - start_diagonal > 0
-    mean_table = scoring_funcs_cython.compute_mean_table_2d_shuffled(data=data, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
+    mean_table = scoring_funcs_cython.compute_mean_table_2d_shuffled(data=data, start_diagonal=start_diagonal,
+                                                                     end_diagonal=end_diagonal)
 
 
 def compute_min_table_2d(data, start_diagonal=0, end_diagonal=0):
@@ -365,5 +368,3 @@ def compute_max_table_2d(data, start_diagonal=0, end_diagonal=0):
                                               numpy.maximum(max_table[truncate_array_tuple(dk_prev, 1, 0)],
                                                             max_table[truncate_array_tuple(dk_prev, 0, 1)]))
     return max_table
-
-

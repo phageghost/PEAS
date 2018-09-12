@@ -2,12 +2,12 @@ import datetime
 
 import numpy
 
-from . import scoring
-from . import constants
-from . import scoring_funcs_cython
 from peas.arrayfuncs import shuffle_matrix, my_diag_indices
 from peas.fitapproxdistros.helper_funcs import fit_distros
 from peas.utilities import log_print
+from . import constants
+from . import scoring
+from . import scoring_funcs_cython
 
 
 def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max_region_size=0, start_diagonal=1,
@@ -26,7 +26,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     if max_region_size == 0:
         max_region_size = n
 
-    sampled_scores = {region_size: numpy.empty((n - (region_size-1)) * num_shuffles) for region_size in
+    sampled_scores = {region_size: numpy.empty((n - (region_size - 1)) * num_shuffles) for region_size in
                       range(min_region_size, max_region_size + 1)}
 
     last_time = datetime.datetime(1950, 1, 1)
@@ -41,7 +41,10 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
             # ToDo: Clean up random seed stuff in C
             # ToDo: refactor to receive a scoring method name instead of a function pointer.
             # print('using C')
-            scores = scoring_funcs_cython.compute_mean_table_2d_shuffled(data_matrix=matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size, random_seed=0) # Keep random_seed as 0 otherwise all shuffles will be the same
+            scores = scoring_funcs_cython.compute_mean_table_2d_shuffled(data_matrix=matrix,
+                                                                         start_diagonal=start_diagonal,
+                                                                         end_diagonal=max_region_size,
+                                                                         random_seed=0)  # Keep random_seed as 0 otherwise all shuffles will be the same
         else:
             matrix = shuffle_matrix(matrix)
             scores = matrix_score_func(matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size)
@@ -56,7 +59,8 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     return sampled_scores
 
 
-def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagonal, distribution_class=constants.DEFAULT_DISTRO_CLASS,
+def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagonal,
+                      distribution_class=constants.DEFAULT_DISTRO_CLASS,
                       parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
                       parameter_smoothing_window_size=constants.SAVGOL_DEFAULT_WINDOW_SIZE):
     """
@@ -66,8 +70,9 @@ def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagona
     """
     log_print('fitting distributions of class {}'.format(distribution_class), 2)
     sizes = sorted(sampled_scores.keys())
-    
-    fit_params = fit_distros(sampled_scores, support_ranges=support_ranges, matrix_size=matrix_size, start_diagonal=start_diagonal, distribution_class=distribution_class,
+
+    fit_params = fit_distros(sampled_scores, support_ranges=support_ranges, matrix_size=matrix_size,
+                             start_diagonal=start_diagonal, distribution_class=distribution_class,
                              parameter_smoothing_window_size=parameter_smoothing_window_size)
 
     empirical_distros = {}
@@ -158,9 +163,8 @@ def compute_pscores_matrix(data_matrix, distro_dict, tail='right', diagonal_star
     for diagonal in range(diagonal_start, diagonal_end):  # region size is diagonal + 1
         diag_indices = my_diag_indices(n, diagonal)
 
-
         p_scores[diag_indices] = -compute_log_pvals_tailed(frozen_distribution=distro_dict[diagonal + 1],
-                                                      x=data_matrix[diag_indices], tail=tail)
+                                                           x=data_matrix[diag_indices], tail=tail)
 
     return p_scores
 

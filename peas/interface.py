@@ -29,15 +29,16 @@ from . import scoring
 
 # ToDo: Add command-line script to process non-genomic CSV files.
 
-def find_peas_vector(input_vector, min_score=constants.DEFAULT_MIN_SCORE, max_pval=constants.DEFAULT_PVALUE_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE, max_size=constants.DEFAULT_MAX_SIZE,
+def find_peas_vector(input_vector, min_score=constants.DEFAULT_MIN_SCORE, max_pval=constants.DEFAULT_PVALUE_THRESHOLD,
+                     min_size=constants.DEFAULT_MIN_SIZE, max_size=constants.DEFAULT_MAX_SIZE,
                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
                      tail=constants.DEFAULT_TAIL,
                      bins=constants.DEFAULT_BINS,
                      quantile_normalize=False,
                      edge_weight_power=constants.DEFAULT_ALPHA,
                      gobig=True):
-
-    input_vector, trim_start, trim_end = trim_data_vector(input_vector) # ToDo: Move this upstream so we can decide on whether to process based on trimming results.
+    input_vector, trim_start, trim_end = trim_data_vector(
+        input_vector)  # ToDo: Move this upstream so we can decide on whether to process based on trimming results.
     n = len(input_vector)
     assert n > min_size + 1
     # ToDo: move data normalization steps from genomic_regions to here so they can operate NaN-free
@@ -51,7 +52,8 @@ def find_peas_vector(input_vector, min_score=constants.DEFAULT_MIN_SCORE, max_pv
     if not max_size:
         max_size = max(n // constants.DEFAULT_MAX_SIZE_FACTOR, min_size + 1)
     elif max_size > half_vector_length:
-        log_print('specified max size of {} is too large, setting to half vector length {}'.format(max_size, half_vector_length))
+        log_print('specified max size of {} is too large, setting to half vector length {}'.format(max_size,
+                                                                                                   half_vector_length))
         max_size = half_vector_length
 
     assert max_size >= min_size
@@ -88,12 +90,11 @@ def find_peas_matrix(input_matrix,
                      parameter_filter_strength=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE,
                      random_seed=None,
                      gobig=True):
-
     assert input_matrix.shape[0] == input_matrix.shape[1], 'input matrix must be square.'
 
     trimmed_matrix, row_start_trim_point, row_end_trim_point, col_start_trim_point, col_end_trim_point = trim_data_matrix(
         input_matrix)
-    n = trimmed_matrix.shape[0] # ToDo: Gracefully handle case where trimmed data is no longer big enough to work with
+    n = trimmed_matrix.shape[0]  # ToDo: Gracefully handle case where trimmed data is no longer big enough to work with
     assert n > min_size + 1
 
     half_matrix_size = n // 2
@@ -102,8 +103,8 @@ def find_peas_matrix(input_matrix,
         max_size = max(n // constants.DEFAULT_MAX_SIZE_FACTOR, min_size + 1)
     elif max_size > half_matrix_size:
         log_print(
-                'specified max size of {} is too large for trimmed matrix of size {} x {}, setting to half matrix size {}'.format(
-                    max_size, n, n, half_matrix_size))
+            'specified max size of {} is too large for trimmed matrix of size {} x {}, setting to half matrix size {}'.format(
+                max_size, n, n, half_matrix_size))
         max_size = half_matrix_size
 
     assert max_size >= min_size
@@ -224,16 +225,17 @@ def generate_score_distributions_matrix(input_matrix,
 
     log_print('computing means of all diagonal square subsets of {} x {} matrix ...'.format(n, n), 2)
     region_scores = scoring.compute_mean_table_2d(input_matrix, start_diagonal=start_diagonal)
-    
+
     support_ranges = {}
     for diag_idx in range(start_diagonal, max_size):
         this_scores = numpy.diag(region_scores, diag_idx)
-        support_ranges[diag_idx+1] = (this_scores.min(), this_scores.max())
+        support_ranges[diag_idx + 1] = (this_scores.min(), this_scores.max())
 
     # Automatic determination of number of shuffles needed to achieve p-value target based on region sizes.
     if num_shuffles == 'auto':
         num_shuffles = empdist.empirical_pval.compute_number_of_permuted_data_points(target_p_value=pvalue_target,
-                                                                                     max_pvalue_cv=max_pvalue_cv) // (n - (max_size - 1))
+                                                                                     max_pvalue_cv=max_pvalue_cv) // (
+                               n - (max_size - 1))
 
     log_print(
         'constructing null models for regions up to size {} using {} permutations ...'.format(max_size,

@@ -1,6 +1,5 @@
 import numpy
 
-
 DEFAULT_MAX_PVALUE_SE = 0.05
 DEFAULT_PARAMETER_SMOOTHING_METHOD = 'savgol'
 SAVGOL_DEFAULT_WINDOW_SIZE = 5
@@ -10,4 +9,5 @@ DEFAULT_NUM_FIT_POINTS = 20
 DEFAULT_PVALUE_CV = 0.1
 
 from . import distributions
+
 DEFAULT_DISTRO_CLASS = distributions.PiecewiseApproxLinear
