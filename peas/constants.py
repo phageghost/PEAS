@@ -7,7 +7,7 @@ MAX_PSCORE = 744.44007192138122
 MIN_PVALUE = numpy.exp(-MAX_PSCORE)
 MAX_PVAL = 1 - 1e-100
 DEFAULT_PVALUE_TARGET = 1e-4
-DEFAULT_PVALUE_CV = 0.05
+DEFAULT_PVALUE_CV = 0.1
 DEFAULT_PSEUDOCOUNT = 0
 DEFAULT_MIN_SIZE = 3
 DEFAULT_MAX_SIZE = 0
@@ -31,11 +31,12 @@ MATRIX_SCORING_FUNCS_BY_NAME = {'sum': scoring.compute_sum_table_2d,
                                 'max': scoring.compute_max_table_2d}
 DEFAULT_SCORE_FUNC = 'mean'
 NULL_DISTRIBUTIONS_BY_NAME = {'pw_power': distributions.PiecewiseApproxPower,
-                              'pw_linear': distributions.PiecewiseApproxLinear}
+                              'pw_linear': distributions.PiecewiseApproxLinear,
+                              'pw_poly': distributions.PiecewiseApproxPolynomial}
 
 DEFAULT_PARAMETER_SMOOTHING_METHOD = 'savgol'
 DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE = 5
-DEFAULT_NULL_DISTRIBUTION = 'pw_power'
+DEFAULT_NULL_DISTRIBUTION = 'pw_poly'
 DEFAULT_MAXIMIZATION_TARGET = 'p_prod'
 DEFAULT_START_DIAGONAL = 1
 USE_C = True

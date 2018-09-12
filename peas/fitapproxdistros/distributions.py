@@ -1,6 +1,7 @@
 import numpy
 import scipy.stats
 
+from . import constants
 from empdist.empirical_pval import compute_empirical_pvalue, compute_p_confidence, compute_empirical_quantile
 from empdist.empirical_distributions import EmpiricalDistribution
 from scipy.optimize import curve_fit
@@ -16,23 +17,23 @@ def cosine_sim(X, Y):
 
 class PiecewiseEmpiricalApprox():
     @classmethod
-    def _compute_empirical_logsf(cls, data, support_range, max_pvalue_std_error=0.05, interp_points=100, is_sorted=False):
+    def _compute_empirical_logsf(cls, data, support_range=None, unique_samples=0, max_confident_x=None, max_pvalue_cv=constants.DEFAULT_PVALUE_CV, interp_points=constants.DEFAULT_NUM_FIT_POINTS, is_sorted=False):
         if not is_sorted:
             data = numpy.sort(data)
+            
+        if not unique_samples:
+            unique_samples = len(data)
 
-        support_min, support_max = support_range
-        x_min = max(data.min(), support_min)
-        # midpoint = data.mean()
-        x_max = min(compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True), support_max)
-
-        # if endpoint <= midpoint:
-            # raise Warning(
-                # 'Minimum data value that meets target p-value error threshold of {} is {}, which is below the mean of {}, therefore piecewise approximation may not work. Try generating more empirical samples or increasing the error tolerance.'.format(
-                    # max_pvalue_std_error, endpoint, midpoint))
-            # midpoint = (endpoint + data_min) / 2
-
-        # fit_xs = numpy.concatenate((numpy.linspace(data_min, midpoint, num=interp_points),
-                                    # numpy.linspace(midpoint, endpoint, num=interp_points)))
+        if max_confident_x is None:
+            max_confident_x = compute_empirical_quantile(data, 1 - compute_p_confidence(n=unique_samples, pvalue_cv=max_pvalue_cv), is_sorted=True)            
+       
+        if not support_range:
+            x_min = data.min()
+            x_max = min(data.max(), max_confident_x)
+        else:
+            x_min = max(data.min(), support_range[0])
+            x_max = min(data.max(), support_range[1], max_confident_x)
+   
         fit_xs = numpy.linspace(x_min, x_max, num=interp_points)
         fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
 
@@ -75,8 +76,8 @@ class PiecewiseApproxLinear(PiecewiseEmpiricalApprox):
     def fit(cls, data, support_range, is_sorted=False, max_pvalue_std_error=0.05, interp_points=100,
             initial_inflection_point=None, initial_slope=500):        
 
-        fit_xs = numpy.concatenate((numpy.linspace(min_val, data_mean, num=interp_points),
-                                    numpy.linspace(data_mean, endpoint, num=interp_points)))
+        fit_xs = numpy.concatenate(numpy.linspace(*support_range, num=interp_points))
+                                    
         fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
         
         fit_xs, fit_ys = cls._compute_empirical_logsf(data=data, support_range=support_range, max_pvalue_std_error=max_pvalue_std_error, interp_points=interp_points, is_sorted=is_sorted)
@@ -116,7 +117,6 @@ class PiecewiseApproxLinearDirect(PiecewiseEmpiricalApprox):
         data_mean = data.mean()
         endpoint = compute_empirical_quantile(data, 1 - compute_p_confidence(n=len(data)), is_sorted=True)
         inflection_point = data_mean
-        print('Max examined data point: {}'.format(endpoint))
 
         fit_xs = [inflection_point, endpoint]
         fit_ys = [0, numpy.log(compute_empirical_pvalue(data, values=endpoint, tail='right', is_sorted=is_sorted))]
@@ -153,13 +153,13 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
                                [lambda x: 0, lambda x: scale * (x - inflection_point) ** power])
 
     @classmethod
-    def fit_with_existing_empirical_logsf(cls, fit_xs, fit_ys, x0=(None, 1), optimization_kwargs={}):
+    def fit_with_existing_empirical_logsf(cls, fit_xs, fit_ys, x0=(None, 1.2), optimization_kwargs={}):
         initial_inflection_point, initial_power = x0
 
         res = scipy.optimize.basinhopping(func=cls._generate_obj_func(fit_xs, fit_ys),
                                           x0=numpy.array([initial_inflection_point, initial_power]),
                                           minimizer_kwargs={'bounds':((-numpy.inf, fit_xs[-1] - 1e-6),
-                                                            (1, numpy.inf)),
+                                                                     (1, numpy.inf)),
                                                             'method':'L-BFGS-B'},
                                           **optimization_kwargs
                                       )
@@ -171,16 +171,14 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
         return inflection_point, power, scale
 
     @classmethod
-    def fit(cls, data, support_range, is_sorted=False, max_pvalue_std_error=0.05, interp_points=100,
+    def fit(cls, data, support_range=None, max_confident_x=None, is_sorted=False, unique_samples=0, max_pvalue_cv=constants.DEFAULT_PVALUE_CV, interp_points=constants.DEFAULT_NUM_FIT_POINTS,
             x0=(None, 1.2), optimization_kwargs={}):
 
         initial_inflection_point, initial_power = x0
 
-        if not is_sorted:
-            data = numpy.sort(data)
-
-        fit_xs, fit_ys = cls._compute_empirical_logsf(data, support_range=support_range,max_pvalue_std_error=max_pvalue_std_error,
-                                                      interp_points=interp_points, is_sorted=True)
+        fit_xs, fit_ys = cls._compute_empirical_logsf(data, support_range=support_range, max_confident_x=max_confident_x, unique_samples=unique_samples, 
+                                                      max_pvalue_cv=max_pvalue_cv,
+                                                      interp_points=interp_points, is_sorted=is_sorted)
 
         if initial_inflection_point is None:
             initial_inflection_point = data.mean()
@@ -207,6 +205,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
     def logsf(self, x):
         return self._piecewise_logsf(x, self.inflection_point, self.power, self.scale)
         
+        
 class PiecewiseApproxPolynomial(PiecewiseEmpiricalApprox):
     """
     Stub class for an empirical distribution with methods to:
@@ -225,7 +224,7 @@ class PiecewiseApproxPolynomial(PiecewiseEmpiricalApprox):
         """
         A polynomial function:
             x < :param:`inflection_point`: 0
-            x >= :param:`inflection_point`: :param:`scale` * (:param:`x` - :param:`inflection_point`)**:param:`power`
+            x >= :param:`inflection_point`: :param:`scale` * ((:param:`x` - :param:`inflection_point`)**:param:`power_a` + :param:`scale` * ((:param:`x` - :param:`inflection_point`)**:param:`power_b`
         """
         # assert inflection_point < x[-1], 'Inflection point must be smaller than largest x value to avoid all zeros'
         return numpy.piecewise(x, [x < inflection_point],
@@ -251,16 +250,13 @@ class PiecewiseApproxPolynomial(PiecewiseEmpiricalApprox):
         return inflection_point, power_a, power_b, scale
 
     @classmethod
-    def fit(cls, data, support_range, is_sorted=False, max_pvalue_std_error=0.05, interp_points=100,
+    def fit(cls, data, support_range=None, max_confident_x=None, unique_samples=0, is_sorted=False, max_pvalue_cv=constants.DEFAULT_PVALUE_CV, interp_points=constants.DEFAULT_NUM_FIT_POINTS,
             x0=(None, 1.5, 1.1), optimization_kwargs={}):
 
         initial_inflection_point, initial_power_a, initial_power_b = x0
-
-        if not is_sorted:
-            data = numpy.sort(data)
-
-        fit_xs, fit_ys = cls._compute_empirical_logsf(data, support_range=support_range,max_pvalue_std_error=max_pvalue_std_error,
-                                                      interp_points=interp_points, is_sorted=True)
+       
+        fit_xs, fit_ys = cls._compute_empirical_logsf(data, support_range=support_range, max_confident_x=max_confident_x, unique_samples=unique_samples, max_pvalue_cv=max_pvalue_cv,
+                                                      interp_points=interp_points, is_sorted=is_sorted)
 
         if initial_inflection_point is None:
             initial_inflection_point = data.mean()
@@ -275,7 +271,7 @@ class PiecewiseApproxPolynomial(PiecewiseEmpiricalApprox):
             test_ys = cls._piecewise_logsf(x=fit_xs, inflection_point=inflection_point, power_a=power_a, power_b=power_b, scale=-1)
 
             score = -cosine_sim(fit_ys, test_ys)
-            print('inflection point {}, power_a {}, power_b {}, score {}'.format(inflection_point, power_a, power_b, score))
+            # print('inflection point {}, power_a {}, power_b {}, score {}'.format(inflection_point, power_a, power_b, score))
 
             if numpy.isnan(score) or numpy.isinf(score):
                 return numpy.inf
@@ -297,8 +293,8 @@ class HybridDistribution(PiecewiseEmpiricalApprox):
         self.extrapolated_distribution = extrapolated_distribution
 
     @classmethod
-    def fit(cls, data, support_range, is_sorted=False, interp_points=100,
-            x0=(None, 2, 1), extrapolated_distribution_class=PiecewiseApproxPolynomial, optimization_kwargs={}):
+    def fit(cls, data, support_range=None, unique_samples=0, is_sorted=False, max_pvalue_cv=constants.DEFAULT_PVALUE_CV, interp_points=constants.DEFAULT_NUM_FIT_POINTS,
+            extrapolated_distribution_class=PiecewiseApproxPolynomial, optimization_kwargs={}):
         """
         Basic idea is to fit a power law tail to the portion of the data that falls between the
         data min and the max confident value, and then that max confident value becomes our 
@@ -308,21 +304,27 @@ class HybridDistribution(PiecewiseEmpiricalApprox):
         
         Forsee difficulty in getting a smooth transition . . . 
         
-        """
+        """        
+        if not is_sorted:
+            data = numpy.sort(data)
         
-        crossover_point = support_range[1]
-#         empirical_data = data[data <= crossover_point]
-        empirical_data = data
+        if not unique_samples:
+            unique_samples = len(data)
+            
+        max_confident_x = compute_empirical_quantile(data, 1 - compute_p_confidence(n=unique_samples, pvalue_cv=max_pvalue_cv), is_sorted=True)
         
-        empirical_distribution = EmpiricalDistribution.from_data(empirical_data)
+        empirical_distribution = EmpiricalDistribution.from_data(data)
+
         extrapolated_distribution = extrapolated_distribution_class(*extrapolated_distribution_class.fit(data=data,
+                                                                                   max_confident_x=max_confident_x,
                                                                                    support_range=support_range,
-                                                                                   is_sorted=is_sorted, 
+                                                                                   unique_samples=unique_samples,
+                                                                                   max_pvalue_cv=max_pvalue_cv,
+                                                                                   is_sorted=True, 
                                                                                    interp_points=interp_points, 
-                                                                                   x0=x0,
                                                                                    optimization_kwargs=optimization_kwargs))
         
-        return empirical_distribution, extrapolated_distribution, crossover_point
+        return empirical_distribution, extrapolated_distribution, max_confident_x
 
 
     def logsf(self, x):

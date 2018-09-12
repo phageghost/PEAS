@@ -250,6 +250,8 @@ def generate_score_distributions_matrix(input_matrix,
                                                                     random_seed=random_seed)
 
     null_distributions = region_stats.fit_distributions(sampled_scores=shuffled_samples,
+                                                        matrix_size=n,
+                                                        start_diagonal=start_diagonal,
                                                         distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[
                                                             null_distribution_class],
                                                         support_ranges=support_ranges,

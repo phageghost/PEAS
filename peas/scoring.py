@@ -299,9 +299,6 @@ def compute_mean_table_2d_shuffled(data, start_diagonal, end_diagonal):
     mean_table = scoring_funcs_cython.compute_mean_table_2d_shuffled(data=data, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
 
 
-
-
-
 def compute_min_table_2d(data, start_diagonal=0, end_diagonal=0):
     """
     Returns an upper-triangular matrix where each cell contains the sum of a square

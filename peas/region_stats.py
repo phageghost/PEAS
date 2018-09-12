@@ -40,6 +40,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
         if constants.USE_C:
             # ToDo: Clean up random seed stuff in C
             # ToDo: refactor to receive a scoring method name instead of a function pointer.
+            # print('using C')
             scores = scoring_funcs_cython.compute_mean_table_2d_shuffled(data_matrix=matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size, random_seed=0) # Keep random_seed as 0 otherwise all shuffles will be the same
         else:
             matrix = shuffle_matrix(matrix)
@@ -55,7 +56,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     return sampled_scores
 
 
-def fit_distributions(sampled_scores, support_ranges, distribution_class=constants.DEFAULT_DISTRO_CLASS,
+def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagonal, distribution_class=constants.DEFAULT_DISTRO_CLASS,
                       parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
                       parameter_smoothing_window_size=constants.SAVGOL_DEFAULT_WINDOW_SIZE):
     """
@@ -65,8 +66,8 @@ def fit_distributions(sampled_scores, support_ranges, distribution_class=constan
     """
     log_print('fitting distributions of class {}'.format(distribution_class), 2)
     sizes = sorted(sampled_scores.keys())
-
-    fit_params = fit_distros(sampled_scores, support_ranges=support_ranges, distribution_class=distribution_class,
+    
+    fit_params = fit_distros(sampled_scores, support_ranges=support_ranges, matrix_size=matrix_size, start_diagonal=start_diagonal, distribution_class=distribution_class,
                              parameter_smoothing_window_size=parameter_smoothing_window_size)
 
     empirical_distros = {}

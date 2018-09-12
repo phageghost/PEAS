@@ -25,6 +25,8 @@ def smooth_parameters(param_dict, parameter_smoothing_window_size=constants.SAVG
 
 def fit_distros(shuffled_samples, distribution_class,
                 support_ranges,
+                matrix_size,
+                start_diagonal=1,
                 max_pvalue_std_error=constants.DEFAULT_MAX_PVALUE_SE,
                 parameter_smoothing_method=None,
                 parameter_smoothing_window_size=constants.SAVGOL_DEFAULT_WINDOW_SIZE, fit_kwargs={}):
@@ -32,22 +34,30 @@ def fit_distros(shuffled_samples, distribution_class,
     Given a dictionary of permuted data vectors, return a dictionary of optimal parameters
     (as tuples) for distributions of class :param:`distro_class`.
     """
-    sizes = sorted(shuffled_samples.keys())
+    region_sizes = sorted(shuffled_samples.keys())
 
     fit_params = {}
-    for region_size in sizes:
+    for region_size in region_sizes:
         # log_print('size {}, min score: {}, mean score: {}, max score: {}'.format(region_size, sampled_scores[region_size].min(), sampled_scores[region_size].mean(), sampled_scores[region_size].max()),3)
+        universe_size = scipy.special.binom(matrix_size, region_size - start_diagonal + 1)
+        num_unique_samples = compute_expected_unique_samples(total_items=universe_size, number_samples=len(shuffled_samples[region_size]))
         this_fit_params = distribution_class.fit(shuffled_samples[region_size], support_range=support_ranges[region_size],
                                                  max_pvalue_std_error=max_pvalue_std_error, **fit_kwargs)
         fit_params[region_size] = this_fit_params
-        log_print('size: {} fit parameters: {}'.format(region_size, this_fit_params), 3)
+        log_print('region size: {}, fit parameters: {}'.format(region_size, this_fit_params), 3)
 
     return smooth_parameters(fit_params, parameter_smoothing_window_size=parameter_smoothing_window_size)
 
     
-def compute_expected_unique_samples(total_objects, number_samples):  
+def compute_expected_unique_samples(total_items, number_samples):  
     """
-    Return the expected number of unique items from a set of size :param total_objects:
+    Return the expected number of unique items from a set of size :param total_items:
     in a sample of size :param number_samples: with replacement.
     """
-    return total_objects - scipy.stats.binom.pmf(n=number_samples, p=1/total_objects, k=0) * total_objects
+    a = (total_items-1) / total_items 
+    if a < 1.0: # avoid numerical overflow at very high values of total_items.
+        return total_items - total_items * a**number_samples
+    else:
+        return number_samples
+
+    
