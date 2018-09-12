@@ -1,6 +1,6 @@
 import pandas
-from scipy.signal import savgol_filter
 import scipy.stats
+from scipy.signal import savgol_filter
 
 from peas.utilities import log_print, force_odd
 from . import constants
@@ -42,7 +42,7 @@ def fit_distros(shuffled_samples, distribution_class,
         universe_size = scipy.special.binom(matrix_size, region_size - start_diagonal + 1)
         num_unique_samples = compute_expected_unique_samples(total_items=universe_size, number_samples=len(shuffled_samples[region_size]))
         this_fit_params = distribution_class.fit(shuffled_samples[region_size], support_range=support_ranges[region_size],
-                                                 max_pvalue_std_error=max_pvalue_std_error, **fit_kwargs)
+                                                 max_pvalue_cv=max_pvalue_std_error, **fit_kwargs)
         fit_params[region_size] = this_fit_params
         log_print('region size: {}, fit parameters: {}'.format(region_size, this_fit_params), 3)
 

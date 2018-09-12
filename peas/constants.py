@@ -32,7 +32,8 @@ MATRIX_SCORING_FUNCS_BY_NAME = {'sum': scoring.compute_sum_table_2d,
 DEFAULT_SCORE_FUNC = 'mean'
 NULL_DISTRIBUTIONS_BY_NAME = {'pw_power': distributions.PiecewiseApproxPower,
                               'pw_linear': distributions.PiecewiseApproxLinear,
-                              'pw_poly': distributions.PiecewiseApproxPolynomial}
+                              'pw_poly': distributions.PiecewiseApproxPolynomial,
+                              'hybrid': distributions.HybridDistribution}
 
 DEFAULT_PARAMETER_SMOOTHING_METHOD = 'savgol'
 DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE = 5

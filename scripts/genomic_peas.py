@@ -75,7 +75,8 @@ def main():
                                 type=str, default=5)
     matrix_options.add_argument('--distribution-type',
                                 help='what type of piecewise distribution to fit to the permuted data',
-                                choices=('pw_power', 'pw_linear'), default=constants.DEFAULT_NULL_DISTRIBUTION)
+                                choices=constants.NULL_DISTRIBUTIONS_BY_NAME.keys(),
+                                default=constants.DEFAULT_NULL_DISTRIBUTION)
     matrix_options.add_argument('--random-seed', '-r',
                                 help='value to use to initialize psuedorandom number generator. If not specified a new seed will be chosen each time',
                                 type=float, default=None)

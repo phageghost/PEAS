@@ -160,7 +160,7 @@ def find_peas_common(region_scores, null_distributions, trim_start, tail, maximi
 
 
 def trim_data_vector(input_vector):
-    trim_start, trim_end = compute_vector_trim_points((input_vector))
+    trim_start, trim_end = compute_vector_trim_points(input_vector)
     trimmed_vector = input_vector[trim_start:trim_end]
     log_print(
         'trimmed {} element vector to remove preceding and trailing NaNs. {} elements remain'.format(len(input_vector),

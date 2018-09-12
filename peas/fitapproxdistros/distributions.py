@@ -1,10 +1,10 @@
 import numpy
 import scipy.stats
+from empdist.empirical_distributions import EmpiricalDistribution
+from empdist.empirical_pval import compute_empirical_pvalue, compute_p_confidence, compute_empirical_quantile
+from scipy.optimize import curve_fit
 
 from . import constants
-from empdist.empirical_pval import compute_empirical_pvalue, compute_p_confidence, compute_empirical_quantile
-from empdist.empirical_distributions import EmpiricalDistribution
-from scipy.optimize import curve_fit
 
 
 def rms_error(X, Y):
@@ -15,7 +15,7 @@ def cosine_sim(X, Y):
     return numpy.dot(X, Y) / numpy.linalg.norm(X) / numpy.linalg.norm(Y)
 
 
-class PiecewiseEmpiricalApprox():
+class PiecewiseEmpiricalApprox:
     @classmethod
     def _compute_empirical_logsf(cls, data, support_range=None, unique_samples=0, max_confident_x=None, max_pvalue_cv=constants.DEFAULT_PVALUE_CV, interp_points=constants.DEFAULT_NUM_FIT_POINTS, is_sorted=False):
         if not is_sorted:
@@ -66,24 +66,22 @@ class PiecewiseApproxLinear(PiecewiseEmpiricalApprox):
         return numpy.piecewise(x, [x < inflection_point], [lambda x: 0, lambda x: slope * (x - inflection_point)])
     
     @classmethod
-    def fit_with_existing_empirical_logsf(cls, fit_xs, fit_ys, x0, optimization_kwargs):
+    def fit_with_existing_empirical_logsf(cls, fit_xs, fit_ys, x0, optimization_kwargs={}):
 
         p, e = scipy.optimize.curve_fit(cls._piecewise_logsf, fit_xs, fit_ys,
-                                        p0=x0)
+                                        p0=x0, **optimization_kwargs)
         return p    
         
     @classmethod
-    def fit(cls, data, support_range, is_sorted=False, max_pvalue_std_error=0.05, interp_points=100,
-            initial_inflection_point=None, initial_slope=500):        
-
-        fit_xs = numpy.concatenate(numpy.linspace(*support_range, num=interp_points))
-                                    
-        fit_ys = numpy.log(compute_empirical_pvalue(data, values=fit_xs, tail='right', is_sorted=True))
-        
-        fit_xs, fit_ys = cls._compute_empirical_logsf(data=data, support_range=support_range, max_pvalue_std_error=max_pvalue_std_error, interp_points=interp_points, is_sorted=is_sorted)
+    def fit(cls, data, support_range=None, is_sorted=False, max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
+            interp_points=constants.DEFAULT_NUM_FIT_POINTS,
+            initial_inflection_point=None, initial_slope=500):
+        fit_xs, fit_ys = cls._compute_empirical_logsf(data=data, support_range=support_range,
+                                                      max_pvalue_cv=max_pvalue_cv, interp_points=interp_points,
+                                                      is_sorted=is_sorted)
 
         if initial_inflection_point == None:
-            initial_inflection_point = data_mean
+            initial_inflection_point = data.mean()
             
         return cls.fit_with_existing_empirical_logsf(fit_xs, fit_ys, x0=(initial_inflection_point, initial_slope))
 

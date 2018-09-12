@@ -15,7 +15,7 @@ def my_diag_indices(n, k=0):
         x_coords = numpy.arange(0, n - k)
         y_coords = numpy.arange(k, n)
 
-    return (x_coords, y_coords)
+    return x_coords, y_coords
 
 
 def truncate_array_tuple(array_tuple, prefix_trim, suffix_trim):
