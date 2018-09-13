@@ -76,10 +76,12 @@ class PiecewiseApproxLinear(PiecewiseEmpiricalApprox):
         return p
 
     @classmethod
-    def fit(cls, data, support_range=None, is_sorted=False, max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
+    def fit(cls, data, support_range=None, max_confident_x=None, is_sorted=False,
+            max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
             interp_points=constants.DEFAULT_NUM_FIT_POINTS,
             initial_inflection_point=None, initial_slope=500):
         fit_xs, fit_ys = cls._compute_empirical_logsf(data=data, support_range=support_range,
+                                                      max_confident_x=max_confident_x,
                                                       max_pvalue_cv=max_pvalue_cv, interp_points=interp_points,
                                                       is_sorted=is_sorted)
 
@@ -175,7 +177,6 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
             x0=(None, 1.2), optimization_kwargs={}):
 
         initial_inflection_point, initial_power = x0
-
         fit_xs, fit_ys = cls._compute_empirical_logsf(data, support_range=support_range,
                                                       max_confident_x=max_confident_x, unique_samples=unique_samples,
                                                       max_pvalue_cv=max_pvalue_cv,
@@ -194,7 +195,6 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
             test_ys = cls._piecewise_logsf(x=fit_xs, inflection_point=inflection_point, power=power, scale=-1)
 
             score = -cosine_sim(fit_ys, test_ys)
-            # print('inflection point {}, power {}, score {}'.format(inflection_point, power, score))
 
             if numpy.isnan(score) or numpy.isinf(score):
                 return numpy.inf
@@ -207,7 +207,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
         return self._piecewise_logsf(x, self.inflection_point, self.power, self.scale)
 
 
-class PiecewiseApproxPolynomial(PiecewiseEmpiricalApprox):
+class PiecewiseApproxDoublePower(PiecewiseEmpiricalApprox):
     """
     Stub class for an empirical distribution with methods to:
         1. Fit a power function to the log-survival function of a data sample
@@ -278,7 +278,6 @@ class PiecewiseApproxPolynomial(PiecewiseEmpiricalApprox):
                                            power_b=power_b, scale=-1)
 
             score = -cosine_sim(fit_ys, test_ys)
-            # print('inflection point {}, power_a {}, power_b {}, score {}'.format(inflection_point, power_a, power_b, score))
 
             if numpy.isnan(score) or numpy.isinf(score):
                 return numpy.inf
@@ -303,7 +302,7 @@ class HybridDistribution(PiecewiseEmpiricalApprox):
     @classmethod
     def fit(cls, data, support_range=None, unique_samples=0, is_sorted=False, max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
             interp_points=constants.DEFAULT_NUM_FIT_POINTS,
-            extrapolated_distribution_class=PiecewiseApproxPolynomial, optimization_kwargs={}):
+            extrapolated_distribution_class=PiecewiseApproxDoublePower, optimization_kwargs={}):
         """
         Basic idea is to fit a power law tail to the portion of the data that falls between the
         data min and the max confident value, and then that max confident value becomes our 

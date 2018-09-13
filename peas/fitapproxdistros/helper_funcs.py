@@ -58,6 +58,6 @@ def compute_expected_unique_samples(total_items, number_samples):
     """
     a = (total_items - 1) / total_items
     if a < 1.0:  # avoid numerical overflow at very high values of total_items.
-        return total_items - total_items * a ** number_samples
+        return int(total_items - total_items * a ** number_samples)
     else:
         return number_samples
