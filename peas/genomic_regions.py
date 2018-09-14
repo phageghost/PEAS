@@ -2,7 +2,7 @@ import numpy
 import pandas
 from statsmodels.stats.multitest import multipletests
 
-from peas.utilities import log_print
+from peas.utilities import log_print, pseudolinearize
 from . import constants
 from . import interface
 
@@ -50,7 +50,7 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     return annotations, features
 
 
-def normalize_features(features, rip_norm=True, znorm=False, log_transform=True):
+def normalize_features(features, rip_norm=True, znorm=False, log_transform=True, pseudocount=0):
     """
     Given a pandas DataFrame with peaks for each condition in columns,
     normalize the column vectors according to the given flags.
@@ -60,7 +60,11 @@ def normalize_features(features, rip_norm=True, znorm=False, log_transform=True)
         log_print('Normalizing by reads in regions ...', 3)
         condition_means = features.mean(axis=0)
         features /= condition_means / condition_means.mean()
-
+        
+    if pseudocount > 0:
+        log_print('Adding pseudocount of {}'.format(pseudocount), 3)
+        features = pseudolinearize(features, pseudocount=pseudocount)        
+        
     if log_transform:
         log_print('Log transforming ...', 3)
         features = numpy.log2(features + 1)
@@ -70,7 +74,7 @@ def normalize_features(features, rip_norm=True, znorm=False, log_transform=True)
         condition_means = features.mean(axis=0)
         condition_stds = features.std(axis=0)
         features = (features - condition_means) / condition_stds
-
+        
     return features
 
 

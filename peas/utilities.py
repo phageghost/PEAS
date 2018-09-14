@@ -96,3 +96,7 @@ def force_even(num):
     if num % 2 == 1:
         num += 1
     return num
+
+    
+def pseudolinearize(arr, pseudocount=1):
+    return (numpy.log2(arr + pseudocount) - numpy.log2(pseudocount))    

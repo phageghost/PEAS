@@ -51,13 +51,13 @@ def fit_distros(shuffled_samples, distribution_class,
     return smooth_parameters(fit_params, parameter_smoothing_window_size=parameter_smoothing_window_size)
 
 
-def compute_expected_unique_samples(total_items, number_samples):
+def compute_expected_unique_samples(total_items, num_samples):
     """
     Return the expected number of unique items from a set of size :param total_items:
-    in a sample of size :param number_samples: with replacement.
+    in a sample of size :param num_samples: with replacement.
     """
-    a = (total_items - 1) / total_items
-    if a < 1.0:  # avoid numerical overflow at very high values of total_items.
-        return int(total_items - total_items * a ** number_samples)
+    unsampled_items = scipy.stats.binom(num_samples, 1/total_items).pmf(0)
+    if unsampled_items < 1.0:
+        return int((1 - unsampled_items) * total_items)
     else:
-        return number_samples
+        return num_samples

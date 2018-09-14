@@ -1,7 +1,7 @@
 #include <stdlib.h>	
 #include <stdio.h>
 //#include <cblas.h>
-#include <time.h>
+// #include <time.h>
 #include "my_array_funcs.h"
 
 // #define printf PySys_WriteStdout
@@ -252,13 +252,9 @@ void fill_vec(double* vec, size_t num_elements, double fill_value){
 	}
 }
 
-void shuffle_array_d(double* arr, size_t n, int random_seed)
+void shuffle_array_d(double* arr, size_t n)
 // A function to generate a random permutation of arr[]
 {
-    // Use a different seed value so that we don't get same
-    // result each time we run this program
-    srand(random_seed);
-
     // Start from the last element and swap one by one. We don't
     // need to run for the first element that's why i > 0
     for (size_t i = n-1; i > 0; i--)
@@ -274,20 +270,9 @@ void shuffle_array_d(double* arr, size_t n, int random_seed)
     }
 }
 
-void shuffle_array_st(size_t* arr, size_t n, int random_seed)
+void shuffle_array_st(size_t* arr, size_t n)
 // A function to generate a random permutation of arr[]
 {
-    // Use a different seed value so that we don't get same
-    // result each time we run this program
-    if (random_seed == 0)
-    {
-        srand(time(NULL));
-    }
-    else
-    {
-        srand(random_seed);
-    }
-
     // Start from the last element and swap one by one. We don't
     // need to run for the first element that's why i > 0
     for (size_t i = n-1; i > 0; i--)

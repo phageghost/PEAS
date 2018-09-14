@@ -25,6 +25,6 @@ void print_vec_l(long*, size_t);
 void print_matrix(double**, size_t, size_t);
 void fill_vec(double*, size_t, double);
 void fill_matrix(double*, size_t, size_t, double);
-void shuffle_array_d(double*, size_t, int);
-void shuffle_array_st(size_t*, size_t, int);
+void shuffle_array_d(double*, size_t);
+void shuffle_array_st(size_t*, size_t);
 

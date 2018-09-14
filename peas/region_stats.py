@@ -43,8 +43,8 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
             # print('using C')
             scores = scoring_funcs_cython.compute_mean_table_2d_shuffled(data_matrix=matrix,
                                                                          start_diagonal=start_diagonal,
-                                                                         end_diagonal=max_region_size,
-                                                                         random_seed=0)  # Keep random_seed as 0 otherwise all shuffles will be the same
+                                                                         end_diagonal=max_region_size)
+                                                                         
         else:
             matrix = shuffle_matrix(matrix)
             scores = matrix_score_func(matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size)
