@@ -41,7 +41,7 @@ def fit_distros(shuffled_samples, distribution_class,
         # log_print('size {}, min score: {}, mean score: {}, max score: {}'.format(region_size, sampled_scores[region_size].min(), sampled_scores[region_size].mean(), sampled_scores[region_size].max()),3)
         universe_size = scipy.special.binom(matrix_size, region_size - start_diagonal + 1)
         num_unique_samples = compute_expected_unique_samples(total_items=universe_size,
-                                                             number_samples=len(shuffled_samples[region_size]))
+                                                             num_samples=len(shuffled_samples[region_size]))
         this_fit_params = distribution_class.fit(shuffled_samples[region_size],
                                                  support_range=support_ranges[region_size],
                                                  max_pvalue_cv=max_pvalue_std_error, **fit_kwargs)

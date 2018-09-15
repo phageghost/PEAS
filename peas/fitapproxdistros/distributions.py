@@ -207,7 +207,7 @@ class PiecewiseApproxPower(PiecewiseEmpiricalApprox):
         return self._piecewise_logsf(x, self.inflection_point, self.power, self.scale)
 
 
-class PiecewiseApproxDoublePower(PiecewiseEmpiricalApprox):
+class PiecewiseApproxPowerSum(PiecewiseEmpiricalApprox):
     """
     Stub class for an empirical distribution with methods to:
         1. Fit a power function to the log-survival function of a data sample
@@ -302,7 +302,7 @@ class HybridDistribution(PiecewiseEmpiricalApprox):
     @classmethod
     def fit(cls, data, support_range=None, unique_samples=0, is_sorted=False, max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
             interp_points=constants.DEFAULT_NUM_FIT_POINTS,
-            extrapolated_distribution_class=PiecewiseApproxDoublePower, optimization_kwargs={}):
+            extrapolated_distribution_class=PiecewiseApproxPowerSum, optimization_kwargs={}):
         """
         Basic idea is to fit a power law tail to the portion of the data that falls between the
         data min and the max confident value, and then that max confident value becomes our 

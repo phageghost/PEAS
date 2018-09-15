@@ -68,18 +68,19 @@ def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagona
     empirical distribution objects representing samples of scores of regions
     of that size taken from permuted versions of :param:`matrix`.
     """
+    # ToDo: move and rename the parameter fitting and distribution generating functions.
     log_print('fitting distributions of class {}'.format(distribution_class), 2)
-    sizes = sorted(sampled_scores.keys())
+    # sizes = sorted(sampled_scores.keys())
 
     fit_params = fit_distros(sampled_scores, support_ranges=support_ranges, matrix_size=matrix_size,
                              start_diagonal=start_diagonal, distribution_class=distribution_class,
                              parameter_smoothing_window_size=parameter_smoothing_window_size)
 
-    empirical_distros = {}
-    for region_size in sizes:
-        empirical_distros[region_size] = distribution_class(*fit_params[region_size])
+    null_distributions = {}
+    for region_size in fit_params:
+        null_distributions[region_size] = distribution_class(*fit_params[region_size])
 
-    return empirical_distros
+    return null_distributions
 
 
 def compute_pscores(region_scores, null_distributions, tail):
