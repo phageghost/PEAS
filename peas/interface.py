@@ -181,7 +181,7 @@ def trim_data_matrix(input_matrix):
 
 
 def generate_score_distributions_vector(input_vector, min_size, max_size,
-                                        bins='auto',
+                                        bins=constants.DEFAULT_BINS,
                                         score_func_name='mean',
                                         pseudocount=constants.DEFAULT_PSEUDOCOUNT):
     validate_param('score_func_name', score_func_name, constants.VECTOR_SCORE_FUNCS_BY_NAME.keys())
@@ -270,23 +270,23 @@ def generate_region_masks(region_scores, pval_scores, min_size, max_size, min_sc
     n = region_scores.shape[0]
     # Apply filters to generate masks
 
-    log_print('applying filters ...', 2)
+    log_print('applying filters', 2)
 
     mask_2d = numpy.zeros((n, n), dtype=bool)
 
-    log_print('minimum size: {} ...'.format(min_size), 3)
+    log_print('minimum size: {}'.format(min_size), 3)
     mask_2d[numpy.triu_indices(n, min_size - 1)] = True
 
     if max_size < n:
-        log_print('maximum size: {} ...'.format(max_size), 3)
+        log_print('maximum size: {}'.format(max_size), 3)
         mask_2d[numpy.triu_indices(n, max_size)] = False
 
     if min_score > 0:
-        log_print('minimum absolute score: {} ...'.format(min_score), 3)
+        log_print('minimum absolute score: {}'.format(min_score), 3)
         mask_2d = numpy.logical_and(mask_2d, numpy.greater(numpy.abs(region_scores), min_score))
 
     if max_pval is not None:
-        log_print('maximum p-value: {} ...'.format(max_pval), 3)
+        log_print('maximum p-value: {}'.format(max_pval), 3)
         p_score_threshold = -numpy.log(max_pval)
         mask_2d = numpy.logical_and(mask_2d, numpy.greater(pval_scores, p_score_threshold))
 

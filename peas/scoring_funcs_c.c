@@ -223,7 +223,7 @@ void c_compute_mean_table_1d_shuffled(double* data, size_t vector_length, size_t
         for (size_t row_idx = 0; row_idx < vector_length - diag_idx; row_idx++)
         {
             size_t col_idx = row_idx + diag_idx;
-            mean_rows[row_idx][col_idx] /= diag_idx;
+            mean_rows[row_idx][col_idx] /= (diag_idx + 1);
         }
     }
     free(mean_rows);
