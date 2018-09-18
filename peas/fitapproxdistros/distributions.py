@@ -248,6 +248,8 @@ class PiecewiseApproxPowerSum(PiecewiseEmpiricalApprox):
 
         first_pass_ys = cls._piecewise_logsf(fit_xs, inflection_point, power_a, power_b, scale=-1)
         scale = -(fit_ys.mean() / first_pass_ys.mean())
+        
+        power_a, power_b = sorted(power_a, power_b) # force ordering
 
         return inflection_point, power_a, power_b, scale
 
