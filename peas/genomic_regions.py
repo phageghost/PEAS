@@ -50,7 +50,8 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     return annotations, features
 
 
-def normalize_features(features, rip_norm=True, znorm=False, log_transform=True, pseudocount=0):
+def normalize_features(features, rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
+                        log_transform=constants.DEFAULT_LOG_TRANSFORM, pseudocount=constants.DEFAULT_PSEUDOCOUNT):
     """
     Given a pandas DataFrame with peaks for each condition in columns,
     normalize the column vectors according to the given flags.
@@ -63,11 +64,13 @@ def normalize_features(features, rip_norm=True, znorm=False, log_transform=True,
         
     if pseudocount > 0:
         log_print('Adding pseudocount of {}'.format(pseudocount), 3)
-        features = pseudolinearize(features, pseudocount=pseudocount)        
+        features += pseudocount     
         
     if log_transform:
         log_print('Log transforming ...', 3)
         features = numpy.log2(features + 1)
+        if pseudocount > 0:
+            features -= numpy.log2(pseudocount)
 
     if znorm:
         log_print('Z-score transforming ...', 3)
@@ -80,7 +83,9 @@ def normalize_features(features, rip_norm=True, znorm=False, log_transform=True,
 
 def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_columns, output_filename='',
                                     rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
-                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, tail=constants.DEFAULT_TAIL,
+                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, 
+                                    psuedocount=constants.DEFAULT_PSEUDOCOUNT,                                    
+                                    tail=constants.DEFAULT_TAIL,
                                     min_score=constants.DEFAULT_MIN_SCORE, pvalue=constants.DEFAULT_PVALUE_THRESHOLD,
                                     fdr=constants.DEFAULT_FDR_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE,
                                     max_size=constants.DEFAULT_MAX_SIZE, alpha=constants.DEFAULT_ALPHA,
@@ -97,7 +102,7 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
     assert 0 <= min_score
 
     features = normalize_features(features=features, rip_norm=rip_norm, znorm=znorm,
-                                  log_transform=log_transform)
+                                  log_transform=log_transform, pseudocount=pseudocount)
 
     if len(feature_columns) == 1:
         features = features.iloc[:, 0]
@@ -149,7 +154,9 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
 
 def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_columns, output_filename='',
                                     rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
-                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, tail=constants.DEFAULT_TAIL,
+                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, 
+                                    psuedocount=constants.DEFAULT_PSEUDOCOUNT,
+                                    tail=constants.DEFAULT_TAIL,
                                     min_score=constants.DEFAULT_MIN_SCORE, pvalue=constants.DEFAULT_PVALUE_THRESHOLD,
                                     fdr=constants.DEFAULT_FDR_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE,
                                     max_size=constants.DEFAULT_MAX_SIZE, alpha=constants.DEFAULT_ALPHA,
@@ -170,7 +177,7 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
     assert 0 <= min_score
 
     features = normalize_features(features=features, rip_norm=rip_norm, znorm=znorm,
-                                  log_transform=log_transform)
+                                  log_transform=log_transform, pseudocount=pseudocount)
 
     total_regions = 0
     region_dfs = []
@@ -222,7 +229,7 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
 
 def generate_bed_df(regions, annotations):
     """
-    Takes a list of region data and returns a Dataframe of peak information suitable for writing to a BED file.
+    Takes a list of region data and returns a DataFrame of peak information suitable for writing to a BED file.
     """
     all_peak_names = list(annotations.index)
     region_list = []

@@ -158,6 +158,7 @@ void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t s
     return;
 }
 
+
 void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* sum_table){
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a

@@ -3,7 +3,7 @@ import setuptools
 from Cython.Build import cythonize
 from setuptools.extension import Extension
 
-VER = '0.0.1'
+VER = '0.1.0'
 AUTHOR = 'Dylan Skola'
 
 print('*' * 80)
@@ -20,8 +20,6 @@ extensions = cythonize([Extension('peas.scoring_funcs_cython',
                         ['peas/scoring_funcs_cython.pyx', 'peas/scoring_funcs_c.c', 'peas/my_array_funcs.c'],
                         extra_compile_args=['-std=gnu99', '-O3', '-march=native', '-finline-functions'],
                         include_dirs=include_dirs)])
-# extensions = cythonize('peas/scoring_funcs_cython.pyx')
-
 
 print(extensions[0].include_dirs)
 setuptools.setup(name='PEAS',

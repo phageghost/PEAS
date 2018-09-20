@@ -64,6 +64,8 @@ def main():
                                    help='take the log2 of each feature column')
     transform_options.add_argument('--z-transform', '-z', action='store_true',
                                    help='z-score transform each feature column')
+    transform_options.add_argument('--pseudocount', '-t', type=float,
+                                   help='pseudocount to add to each feature before log-transforming')                                   
 
     matrix_options = parser.add_argument_group(title='matrix options',
                                                description='options that only apply when operating in matrix mode')
@@ -99,6 +101,7 @@ def main():
                                                                  rip_norm=args.col_norm,
                                                                  znorm=args.z_transform,
                                                                  log_transform=args.log_transform,
+                                                                 psuedocount=args.pseudocount,
                                                                  tail=args.tail, min_score=args.min_score,
                                                                  pvalue=args.pvalue, fdr=args.fdr,
                                                                  min_size=args.min_size,
@@ -112,6 +115,7 @@ def main():
                                                                  rip_norm=args.col_norm,
                                                                  znorm=args.z_transform,
                                                                  log_transform=args.log_transform,
+                                                                 psuedocount=args.pseudocount,                                                                 
                                                                  tail=args.tail, min_score=args.min_score,
                                                                  pvalue=args.pvalue, fdr=args.fdr,
                                                                  min_size=args.min_size,
