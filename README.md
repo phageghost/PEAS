@@ -1,15 +1,6 @@
-# PEAP
-Proximal Enrichment by Approximated Permutation
+# PEAS
+## Proximal Enrichment by Approximated Sampling
 
-## Architecture:
-1. 1D
-    * Can compute 
-        * mean
-        * sum
-        * product 
-            * (do we need since we would implement simply by logging the input?)
-        
-2. 2D
-    *         
-        
-        
+PEAS provides a pipeline to compute optimal sets of enriched or depleted signal in either a 1-D vector or 2-D matrix. 
+
+It also includes a module and command-line script that apply this method to the problem of finding such enriched or depleted areas of differences or correlations between columns of a genomic peak matrix.    
