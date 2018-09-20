@@ -3,7 +3,7 @@ import setuptools
 from Cython.Build import cythonize
 from setuptools.extension import Extension
 
-VER = '0.1.1'
+VER = '0.1.6'
 AUTHOR = 'Dylan Skola'
 
 print('*' * 80)
@@ -21,16 +21,17 @@ extensions = cythonize([Extension('peas.scoring_funcs_cython',
                         extra_compile_args=['-std=gnu99', '-O3', '-march=native', '-finline-functions'],
                         include_dirs=include_dirs)])
 
-print(extensions[0].include_dirs)
+#print(extensions[0].include_dirs)
 setuptools.setup(name='PEAS',
                  version=VER,
-                 description=' Proximal Enrichment By Approximated Sampling  ',
+                 description='Proximal Enrichment By Approximated Sampling',
                  long_description=long_description,
                  url='https://github.com/phageghost/PEAS',
                  author=AUTHOR,
                  author_email='peas@phageghost.net',
                  license='MIT',
-                 packages=['peas'],
+                 packages=['peas', 'peas.fitapproxdistros'],
+                 python_requires='>=3.6',
                  scripts=['scripts/genomic_peas.py'],
                  ext_modules=extensions,
                  include_dirs=[numpy.get_include()],
@@ -38,8 +39,8 @@ setuptools.setup(name='PEAS',
                                    'empdist'],
                  zip_safe=False,
                  classifiers=(
-                     "Programming Language :: Python :: 3",
-                     "License :: OSI Approved :: MIT License",
-                     "Operating System :: OS Independent",
-                 ),
+                             "Programming Language :: Python :: 3",
+                             "License :: OSI Approved :: MIT License",
+                             "Operating System :: OS Independent",
+                             ),
                  )
