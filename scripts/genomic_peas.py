@@ -65,6 +65,7 @@ def main():
     transform_options.add_argument('--z-transform', '-z', action='store_true',
                                    help='z-score transform each feature column')
     transform_options.add_argument('--pseudocount', '-u', type=float,
+                                   default=constants.DEFAULT_PSEUDOCOUNT,
                                    help='pseudocount to add to each feature before log-transforming')                                   
 
     matrix_options = parser.add_argument_group(title='matrix options',
