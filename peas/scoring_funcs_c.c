@@ -53,7 +53,7 @@ void c_compute_sum_table_2d(double* data, size_t matrix_size, size_t start_diago
 }
 
 
-void c_compute_sum_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* sum_table){
+void c_compute_sum_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* sum_table, long random_seed){
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a square
     subset of :param:`data`centered on the diagonal with a corner in that cell, excluding
@@ -68,6 +68,8 @@ void c_compute_sum_table_2d_shuffled(double* data, size_t matrix_size, size_t st
 	double **sum_rows; // pointer arrays for convenient indexing
 	double **data_rows;
 	double this_cell;
+
+	srand(random_seed);
 
     size_t shuffled_index[matrix_size];
     for (size_t i = 0; i < matrix_size; i++){
@@ -129,7 +131,7 @@ void generate_2d_denominator_table(size_t n, size_t start_diagonal, size_t end_d
 }
 
 
-void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* mean_table)
+void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* mean_table, long random_seed)
 {
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a square
@@ -142,7 +144,7 @@ void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t s
     result.
     */
     double** mean_rows = get_row_ptrs(mean_table, matrix_size, matrix_size);
-    c_compute_sum_table_2d_shuffled(data, matrix_size, start_diagonal, end_diagonal, mean_table);
+    c_compute_sum_table_2d_shuffled(data, matrix_size, start_diagonal, end_diagonal, mean_table, random_seed);
     double cumulant = 0;
 
     for (size_t diag_idx = start_diagonal; diag_idx < end_diagonal; diag_idx++)
@@ -159,7 +161,7 @@ void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t s
 }
 
 
-void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* sum_table){
+void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* sum_table, long random_seed){
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a
     subset of :param:`data`from :param row: to :param col:.
@@ -172,6 +174,8 @@ void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t 
     size_t row_idx, col_idx, k;
 	double **sum_rows; // pointer arrays for convenient indexing
 	double this_cell;
+
+	srand(random_seed);
 
     size_t shuffled_index[vector_length];
     for (size_t i = 0; i < vector_length; i++){
@@ -202,7 +206,7 @@ void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t 
 }	
 
 
-void c_compute_mean_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* mean_table)
+void c_compute_mean_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* mean_table, long random_seed)
 {
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a square
@@ -215,7 +219,7 @@ void c_compute_mean_table_1d_shuffled(double* data, size_t vector_length, size_t
     result.
     */
     double** mean_rows = get_row_ptrs(mean_table, vector_length, vector_length);
-    c_compute_sum_table_1d_shuffled(data, vector_length, end_diagonal, mean_table);
+    c_compute_sum_table_1d_shuffled(data, vector_length, end_diagonal, mean_table, random_seed);
     // double cumulant = 0;
 
     for (size_t diag_idx = 0; diag_idx < end_diagonal; diag_idx++)
