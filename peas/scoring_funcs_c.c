@@ -53,7 +53,7 @@ void c_compute_sum_table_2d(double* data, size_t matrix_size, size_t start_diago
 }
 
 
-void c_compute_sum_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* sum_table, long random_seed){
+void c_compute_sum_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* sum_table, unsigned int random_seed){
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a square
     subset of :param:`data`centered on the diagonal with a corner in that cell, excluding
@@ -131,7 +131,7 @@ void generate_2d_denominator_table(size_t n, size_t start_diagonal, size_t end_d
 }
 
 
-void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* mean_table, long random_seed)
+void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t start_diagonal, size_t end_diagonal, double* mean_table, unsigned int random_seed)
 {
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a square
@@ -161,7 +161,7 @@ void c_compute_mean_table_2d_shuffled(double* data, size_t matrix_size, size_t s
 }
 
 
-void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* sum_table, long random_seed){
+void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* sum_table, unsigned int random_seed){
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a
     subset of :param:`data`from :param row: to :param col:.
@@ -206,7 +206,7 @@ void c_compute_sum_table_1d_shuffled(double* data, size_t vector_length, size_t 
 }	
 
 
-void c_compute_mean_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* mean_table, long random_seed)
+void c_compute_mean_table_1d_shuffled(double* data, size_t vector_length, size_t end_diagonal, double* mean_table, unsigned int random_seed)
 {
     /*
     Returns an upper-triangular matrix where each cell contains the sum of a square

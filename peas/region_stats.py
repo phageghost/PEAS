@@ -20,9 +20,11 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     """
     MIN_REPORTING_TIME = 5
     assert matrix.shape[0] == matrix.shape[1]
+
     log_print('setting random seed to {}'.format(random_seed), 3)
     numpy.random.seed(random_seed)
-    integer_seed = numpy.sum(numpy.random.get_state()[1])
+    integer_seed = int(hash(tuple(numpy.random.get_state()[1])) % (4294967295 - 1))
+
     n = matrix.shape[0]
     if max_region_size == 0:
         max_region_size = n
@@ -42,6 +44,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
             # ToDo: Clean up random seed stuff in C
             # ToDo: refactor to receive a scoring method name instead of a function pointer.
             # print('using C')
+            # print('seeding with {}'.format(integer_seed + shuffle_idx))
             scores = scoring_funcs_cython.compute_mean_table_2d_shuffled(data_matrix=matrix,
                                                                          start_diagonal=start_diagonal,
                                                                          end_diagonal=max_region_size,
