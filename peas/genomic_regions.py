@@ -111,10 +111,9 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
     else:
         assert len(feature_columns) == 2
         assert feature_columns[0] != feature_columns[1]
-        if feature_columns[1] < feature_columns[0]:
-            features = features.iloc[:, 1] - features.iloc[:, 0]
-        else:
-            features = features.iloc[:, 0] - features.iloc[:, 1]
+
+        features = features.iloc[:, feature_columns[1]] - features.iloc[:, feature_columns[0]]
+
 
     total_regions = 0
     region_dfs = []
