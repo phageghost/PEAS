@@ -3,7 +3,7 @@ import setuptools
 from Cython.Build import cythonize
 from setuptools.extension import Extension
 
-VER = '0.1.11'
+VER = '0.1.12222222222222222222222'
 AUTHOR = 'Dylan Skola'
 
 print('*' * 80)
