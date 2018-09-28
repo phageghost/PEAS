@@ -45,7 +45,7 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     peak_df = peak_df.sort_values(by=[chrom_column_heading, start_column_heading])
 
     annotations = peak_df.iloc[:, :4]
-    features = peak_df.iloc[:, numpy.array(feature_columns) - 1]  # account for index column
+    features = peak_df.iloc[:, numpy.array(feature_columns)]  # account for index column
 
     return annotations, features
 
@@ -61,14 +61,16 @@ def normalize_features(features, rip_norm=constants.DEFAULT_RIP_NORM, znorm=cons
         log_print('Normalizing by reads in regions ...', 3)
         condition_means = features.mean(axis=0)
         features /= condition_means / condition_means.mean()
-        
-    if pseudocount > 0:
+
+    if log_transform:
+        if pseudocount == 0:
+            pseudocount = 1
+            
         log_print('Adding pseudocount of {}'.format(pseudocount), 3)
         features += pseudocount     
         
-    if log_transform:
         log_print('Log transforming ...', 3)
-        features = numpy.log2(features + 1)
+        features = numpy.log2(features)
         if pseudocount > 0:
             features -= numpy.log2(pseudocount)
 

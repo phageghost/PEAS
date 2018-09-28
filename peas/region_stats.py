@@ -21,9 +21,9 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     MIN_REPORTING_TIME = 5
     assert matrix.shape[0] == matrix.shape[1]
 
-    log_print('setting random seed to {}'.format(random_seed), 3)
     numpy.random.seed(random_seed)
     integer_seed = int(hash(tuple(numpy.random.get_state()[1])) % (4294967295 - 1))
+    log_print('setting random seed to {}'.format(integer_seed), 3)
 
     n = matrix.shape[0]
     if max_region_size == 0:
