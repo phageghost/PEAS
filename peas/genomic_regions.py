@@ -37,7 +37,7 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     """
     Assumes columns are: peak_id, Chr, Start, End, Strand, Peak Score, Focus Ratio/Region Size, data columns
     """
-    assert sum([col > 4 for col in feature_columns]) == len(feature_columns)
+    assert sum([col > 4 for col in feature_columns]) == len(feature_columns), 'Feature column indices must be greater than 4'
     peak_df = pandas.read_csv(peak_fname, index_col=0, sep='\t')
     chrom_column_heading = peak_df.columns[0]
     start_column_heading = peak_df.columns[1]
@@ -45,7 +45,12 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     peak_df = peak_df.sort_values(by=[chrom_column_heading, start_column_heading])
 
     annotations = peak_df.iloc[:, :4]
-    features = peak_df.iloc[:, numpy.array(feature_columns)]  # account for index column
+    
+    feature_columns = numpy.array(feature_columns) - 1 # account for index column
+    
+    log_print('selecting columns: {}'.format(', '.join(feature_columns)))
+    
+    features = peak_df.iloc[:, feature_columns]  
 
     return annotations, features
 
@@ -113,7 +118,6 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
         assert feature_columns[0] != feature_columns[1]
 
     features = features.iloc[:, feature_columns[1]] - features.iloc[:, feature_columns[0]]
-
 
     total_regions = 0
     region_dfs = []
