@@ -22,7 +22,7 @@ def load_and_parse_bed_file(bed_fname, feature_columns):
     Assumes columns are: chrom, chromStart, chromEnd, name, score, strand
     """
     assert sum([col > 3 for col in feature_columns]) == len(feature_columns)
-
+    log_print('loading data from {}'.format(peak_fname))
     bed_df = pandas.read_csv(bed_fname, sep='\t', header=None)
 
     bed_df = bed_df.sort_values(by=[0, 1])
@@ -38,6 +38,8 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     Assumes columns are: peak_id, Chr, Start, End, Strand, Peak Score, Focus Ratio/Region Size, data columns
     """
     assert sum([col > 4 for col in feature_columns]) == len(feature_columns), 'Feature column indices must be greater than 4'
+    log_print('loading data from {}'.format(peak_fname))
+    
     peak_df = pandas.read_csv(peak_fname, index_col=0, sep='\t')
     chrom_column_heading = peak_df.columns[0]
     start_column_heading = peak_df.columns[1]
@@ -48,7 +50,7 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     
     feature_columns = numpy.array(feature_columns) - 1 # account for index column
     
-    log_print('selecting columns: {}'.format(', '.join(feature_columns)))
+    log_print('selecting columns: {}'.format(', '.join(peak_df.columns[feature_columns])))
     
     features = peak_df.iloc[:, feature_columns]  
 
@@ -117,26 +119,29 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
         assert len(feature_columns) == 2
         assert feature_columns[0] != feature_columns[1]
 
-    features = features.iloc[:, feature_columns[1]] - features.iloc[:, feature_columns[0]]
+    features = features.iloc[:, 1] - features.iloc[:, 0]
 
     total_regions = 0
     region_dfs = []
     for chrom, chrom_annotations in annotations.groupby(annotations.columns[0]):
-        log_print('processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
         chrom_vector = features.loc[chrom_annotations.index].values
+        if len(chrom_vector) > min_size + 1:
+            log_print('processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
 
-        this_chrom_peas = interface.find_peas_vector(input_vector=chrom_vector, min_score=min_score,
-                                                     max_pval=pvalue, min_size=min_size, max_size=max_size,
-                                                     maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
-                                                     tail=tail,
-                                                     bins=bins,
-                                                     quantile_normalize=False,
-                                                     edge_weight_power=alpha,
-                                                     gobig=True)
+            this_chrom_peas = interface.find_peas_vector(input_vector=chrom_vector, min_score=min_score,
+                                                         max_pval=pvalue, min_size=min_size, max_size=max_size,
+                                                         maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
+                                                         tail=tail,
+                                                         bins=bins,
+                                                         quantile_normalize=False,
+                                                         edge_weight_power=alpha,
+                                                         gobig=True)
 
-        this_chrom_peas_df = generate_bed_df(this_chrom_peas, chrom_annotations)
-        total_regions += this_chrom_peas_df.shape[0]
-        region_dfs.append(this_chrom_peas_df)
+            this_chrom_peas_df = generate_bed_df(this_chrom_peas, chrom_annotations)
+            total_regions += this_chrom_peas_df.shape[0]
+            region_dfs.append(this_chrom_peas_df)
+        else:
+            log_print('chromosome {} had only {} elements (needed {}), skipping ...'.format(chrom, len(chrom_vector), min_size + 1),1)
 
     if total_regions > 0:
         all_regions_df = pandas.concat([region_df for region_df in region_dfs if region_df.shape[0] > 0], axis=0)
@@ -187,12 +192,13 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
     total_regions = 0
     region_dfs = []
     for chrom, chrom_annotations in annotations.groupby(annotations.columns[0]):
-        log_print('processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
-        chrom_matrix = features.loc[chrom_annotations.index]
-        log_print('correlating ...', 2)
-        chrom_corrs = chrom_matrix.T.corr().values
+        if chrom_annotations.shape[0] > min_size + 1:
+            log_print('processing {} elements in chromosome {}'.format(chrom_annotations.shape[0], chrom), 1)
+            chrom_matrix = features.loc[chrom_annotations.index]
+            log_print('correlating ...', 2)
+            chrom_corrs = chrom_matrix.T.corr().values
 
-        this_chrom_peas = interface.find_peas_matrix(input_matrix=chrom_corrs, min_score=min_score,
+            this_chrom_peas = interface.find_peas_matrix(input_matrix=chrom_corrs, min_score=min_score,
                                                      max_pval=pvalue, min_size=min_size, max_size=max_size,
                                                      maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
                                                      tail=tail,
@@ -209,9 +215,11 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
                                                      gobig=True
                                                      )
 
-        this_chrom_peas_df = generate_bed_df(this_chrom_peas, chrom_annotations)
-        total_regions += this_chrom_peas_df.shape[0]
-        region_dfs.append(this_chrom_peas_df)
+            this_chrom_peas_df = generate_bed_df(this_chrom_peas, chrom_annotations)
+            total_regions += this_chrom_peas_df.shape[0]
+            region_dfs.append(this_chrom_peas_df)
+        else:
+            log_print('chromosome {} had only {} elements (needed {}), skipping ...'.format(chrom, chrom_annotations.shape[0], min_size + 1),1)
 
     if total_regions > 0:
         all_regions_df = pandas.concat([region_df for region_df in region_dfs if region_df.shape[0] > 0], axis=0)
