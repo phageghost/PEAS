@@ -115,6 +115,8 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
 
     # transform score
     if min_score > 0:
+        if pseudocount == 0:
+            pseudocount = 1
         min_score = numpy.log2((2**min_score) + pseudocount) - numpy.log2(pseudocount)
 
     if len(feature_columns) == 1:
