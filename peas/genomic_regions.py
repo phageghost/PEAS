@@ -113,6 +113,10 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
     features = normalize_features(features=features, rip_norm=rip_norm, znorm=znorm,
                                   log_transform=log_transform, pseudocount=pseudocount)
 
+    # transform score
+    if min_score > 0:
+        min_score = numpy.log2((2**min_score) + pseudocount) - numpy.log2(pseudocount)
+
     if len(feature_columns) == 1:
         features = features.iloc[:, 0]
     else:
