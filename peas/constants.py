@@ -1,5 +1,5 @@
-import numpy
 import empdist
+import numpy
 
 from . import scoring
 

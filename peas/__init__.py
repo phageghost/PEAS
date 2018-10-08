@@ -4,5 +4,4 @@ from . import constants
 from . import genomic_regions
 from . import region_stats
 from . import scoring
-from . import scoring_funcs_cython
 from .interface import *

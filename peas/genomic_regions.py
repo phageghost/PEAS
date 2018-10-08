@@ -2,7 +2,7 @@ import numpy
 import pandas
 from statsmodels.stats.multitest import multipletests
 
-from peas.utilities import log_print, pseudolinearize
+from peas.utilities import log_print
 from . import constants
 from . import interface
 
@@ -37,9 +37,10 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     """
     Assumes columns are: peak_id, Chr, Start, End, Strand, Peak Score, Focus Ratio/Region Size, data columns
     """
-    assert sum([col > 4 for col in feature_columns]) == len(feature_columns), 'Feature column indices must be greater than 4'
+    assert sum([col > 4 for col in feature_columns]) == len(
+        feature_columns), 'Feature column indices must be greater than 4'
     log_print('loading data from {}'.format(peak_fname))
-    
+
     peak_df = pandas.read_csv(peak_fname, index_col=0, sep='\t')
     chrom_column_heading = peak_df.columns[0]
     start_column_heading = peak_df.columns[1]
@@ -47,18 +48,18 @@ def load_and_parse_peak_file(peak_fname, feature_columns):
     peak_df = peak_df.sort_values(by=[chrom_column_heading, start_column_heading])
 
     annotations = peak_df.iloc[:, :4]
-    
-    feature_columns = numpy.array(feature_columns) - 1 # account for index column
-    
+
+    feature_columns = numpy.array(feature_columns) - 1  # account for index column
+
     log_print('selecting columns: {}'.format(', '.join(peak_df.columns[feature_columns])))
-    
-    features = peak_df.iloc[:, feature_columns]  
+
+    features = peak_df.iloc[:, feature_columns]
 
     return annotations, features
 
 
 def normalize_features(features, rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
-                        log_transform=constants.DEFAULT_LOG_TRANSFORM, pseudocount=constants.DEFAULT_PSEUDOCOUNT):
+                       log_transform=constants.DEFAULT_LOG_TRANSFORM, pseudocount=constants.DEFAULT_PSEUDOCOUNT):
     """
     Given a pandas DataFrame with peaks for each condition in columns,
     normalize the column vectors according to the given flags.
@@ -72,10 +73,10 @@ def normalize_features(features, rip_norm=constants.DEFAULT_RIP_NORM, znorm=cons
     if log_transform:
         if pseudocount == 0:
             pseudocount = 1
-            
+
         log_print('Adding pseudocount of {}'.format(pseudocount), 3)
-        features += pseudocount     
-        
+        features += pseudocount
+
         log_print('Log transforming ...', 3)
         features = numpy.log2(features)
         if pseudocount > 0:
@@ -86,14 +87,14 @@ def normalize_features(features, rip_norm=constants.DEFAULT_RIP_NORM, znorm=cons
         condition_means = features.mean(axis=0)
         condition_stds = features.std(axis=0)
         features = (features - condition_means) / condition_stds
-        
+
     return features
 
 
 def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_columns, output_filename='',
                                     rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
-                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, 
-                                    pseudocount=constants.DEFAULT_PSEUDOCOUNT,                                    
+                                    log_transform=constants.DEFAULT_LOG_TRANSFORM,
+                                    pseudocount=constants.DEFAULT_PSEUDOCOUNT,
                                     tail=constants.DEFAULT_TAIL,
                                     min_score=constants.DEFAULT_MIN_SCORE, pvalue=constants.DEFAULT_PVALUE_THRESHOLD,
                                     fdr=constants.DEFAULT_FDR_THRESHOLD, min_size=constants.DEFAULT_MIN_SIZE,
@@ -117,7 +118,7 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
     if min_score > 0:
         if pseudocount == 0:
             pseudocount = 1
-        min_score = numpy.log2((2**min_score) + pseudocount) - numpy.log2(pseudocount)
+        min_score = numpy.log2((2 ** min_score) + pseudocount) - numpy.log2(pseudocount)
 
     if len(feature_columns) == 1:
         features = features.iloc[:, 0]
@@ -147,7 +148,8 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
             total_regions += this_chrom_peas_df.shape[0]
             region_dfs.append(this_chrom_peas_df)
         else:
-            log_print('chromosome {} had only {} elements (needed {}), skipping ...'.format(chrom, len(chrom_vector), min_size + 1),1)
+            log_print('chromosome {} had only {} elements (needed {}), skipping ...'.format(chrom, len(chrom_vector),
+                                                                                            min_size + 1), 1)
 
     if total_regions > 0:
         all_regions_df = pandas.concat([region_df for region_df in region_dfs if region_df.shape[0] > 0], axis=0)
@@ -170,7 +172,7 @@ def find_genomic_region_crds_vector(peak_filename, peak_file_format, feature_col
 
 def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_columns, output_filename='',
                                     rip_norm=constants.DEFAULT_RIP_NORM, znorm=constants.DEFAULT_ZNORM,
-                                    log_transform=constants.DEFAULT_LOG_TRANSFORM, 
+                                    log_transform=constants.DEFAULT_LOG_TRANSFORM,
                                     pseudocount=constants.DEFAULT_PSEUDOCOUNT,
                                     tail=constants.DEFAULT_TAIL,
                                     min_score=constants.DEFAULT_MIN_SCORE, pvalue=constants.DEFAULT_PVALUE_THRESHOLD,
@@ -205,27 +207,29 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
             chrom_corrs = chrom_matrix.T.corr().values
 
             this_chrom_peas = interface.find_peas_matrix(input_matrix=chrom_corrs, min_score=min_score,
-                                                     max_pval=pvalue, min_size=min_size, max_size=max_size,
-                                                     maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
-                                                     tail=tail,
-                                                     quantile_normalize=False,
-                                                     edge_weight_power=alpha,
-                                                     pvalue_target=constants.DEFAULT_PVALUE_TARGET,
-                                                     max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
-                                                     num_shuffles='auto',
-                                                     null_distribution_class=null_distribution_type,
-                                                     start_diagonal=start_diagonal,
-                                                     parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                                                     parameter_filter_strength=parameter_smoothing_window_size,
-                                                     random_seed=random_seed,
-                                                     gobig=True
-                                                     )
+                                                         max_pval=pvalue, min_size=min_size, max_size=max_size,
+                                                         maximization_target=constants.DEFAULT_MAXIMIZATION_TARGET,
+                                                         tail=tail,
+                                                         quantile_normalize=False,
+                                                         edge_weight_power=alpha,
+                                                         pvalue_target=constants.DEFAULT_PVALUE_TARGET,
+                                                         max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
+                                                         num_shuffles='auto',
+                                                         null_distribution_class=null_distribution_type,
+                                                         start_diagonal=start_diagonal,
+                                                         parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                                                         parameter_filter_strength=parameter_smoothing_window_size,
+                                                         random_seed=random_seed,
+                                                         gobig=True
+                                                         )
 
             this_chrom_peas_df = generate_bed_df(this_chrom_peas, chrom_annotations)
             total_regions += this_chrom_peas_df.shape[0]
             region_dfs.append(this_chrom_peas_df)
         else:
-            log_print('chromosome {} had only {} elements (needed {}), skipping ...'.format(chrom, chrom_annotations.shape[0], min_size + 1),1)
+            log_print(
+                'chromosome {} had only {} elements (needed {}), skipping ...'.format(chrom, chrom_annotations.shape[0],
+                                                                                      min_size + 1), 1)
 
     if total_regions > 0:
         all_regions_df = pandas.concat([region_df for region_df in region_dfs if region_df.shape[0] > 0], axis=0)

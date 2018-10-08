@@ -1,10 +1,10 @@
 import datetime
 
-import numpy
-
 import empdist.constants
-from peas.arrayfuncs import shuffle_matrix, my_diag_indices
+import numpy
 from empdist.helper_funcs import fit_distros
+
+from peas.arrayfuncs import shuffle_matrix, my_diag_indices
 from peas.utilities import log_print
 from . import constants
 from . import scoring
@@ -50,7 +50,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
                                                                          start_diagonal=start_diagonal,
                                                                          end_diagonal=max_region_size,
                                                                          random_seed=integer_seed + shuffle_idx)
-                                                                         
+
         else:
             matrix = shuffle_matrix(matrix)
             scores = matrix_score_func(matrix, start_diagonal=start_diagonal, end_diagonal=max_region_size)

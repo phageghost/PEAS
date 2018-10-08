@@ -2,10 +2,10 @@ import warnings
 
 import numpy
 
-import peas
 from peas.arrayfuncs import my_diag_indices, truncate_array_tuple
 from . import constants
 from . import scoring_funcs_cython
+
 
 # ToDo: Simplify computation of denominator
 # ToDo: Make C versions of other scoring functions
