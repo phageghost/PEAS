@@ -21,6 +21,7 @@ def eprint(*args, **kwargs):
 
 
 def log_print(message, tabs=1):
+    # indented_message = '\n'.join(['{}{}'.format('\t'*tabs, line) for line in str(message).split('\n')])
     eprint('{}{}{}'.format(pretty_now(), '\t' * tabs, message))
 
 
@@ -99,4 +100,12 @@ def force_even(num):
 
     
 def pseudolinearize(arr, pseudocount=1):
-    return (numpy.log2(arr + pseudocount) - numpy.log2(pseudocount))    
+    return (numpy.log2(arr + pseudocount) - numpy.log2(pseudocount))
+
+
+def rms_error(X, Y):
+    return numpy.sqrt(numpy.mean((X - Y) ** 2))
+
+
+def cosine_sim(X, Y):
+    return numpy.dot(X, Y) / numpy.linalg.norm(X) / numpy.linalg.norm(Y)

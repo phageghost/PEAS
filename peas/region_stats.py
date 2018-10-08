@@ -3,7 +3,7 @@ import datetime
 import numpy
 
 from peas.arrayfuncs import shuffle_matrix, my_diag_indices
-from peas.fitapproxdistros.helper_funcs import fit_distros
+from empdist.helper_funcs import fit_distros
 from peas.utilities import log_print
 from . import constants
 from . import scoring
