@@ -2,6 +2,7 @@ import datetime
 
 import numpy
 
+import empdist.constants
 from peas.arrayfuncs import shuffle_matrix, my_diag_indices
 from empdist.helper_funcs import fit_distros
 from peas.utilities import log_print
@@ -65,9 +66,9 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
 
 
 def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagonal,
-                      distribution_class=constants.DEFAULT_DISTRO_CLASS,
-                      parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                      parameter_smoothing_window_size=constants.SAVGOL_DEFAULT_WINDOW_SIZE):
+                      distribution_class=empdist.constants.DEFAULT_DISTRO_CLASS,
+                      parameter_smoothing_method=empdist.constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                      parameter_smoothing_window_size=empdist.constants.SAVGOL_DEFAULT_WINDOW_SIZE):
     """
     Given a matrix of values, returns a dictionary, keyed by region size, of
     empirical distribution objects representing samples of scores of regions

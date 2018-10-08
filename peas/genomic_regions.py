@@ -22,7 +22,7 @@ def load_and_parse_bed_file(bed_fname, feature_columns):
     Assumes columns are: chrom, chromStart, chromEnd, name, score, strand
     """
     assert sum([col > 3 for col in feature_columns]) == len(feature_columns)
-    log_print('loading data from {}'.format(peak_fname))
+    log_print('loading data from {}'.format(bed_fname))
     bed_df = pandas.read_csv(bed_fname, sep='\t', header=None)
 
     bed_df = bed_df.sort_values(by=[0, 1])

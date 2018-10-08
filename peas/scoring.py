@@ -7,9 +7,6 @@ from peas.arrayfuncs import my_diag_indices, truncate_array_tuple
 from . import constants
 from . import scoring_funcs_cython
 
-DEFAULT_DISTRO_CLASS = peas.fitapproxdistros.distributions.PiecewiseApproxLinear
-
-
 # ToDo: Simplify computation of denominator
 # ToDo: Make C versions of other scoring functions
 # ToDo: Integrate 1D functions with 2D functions?

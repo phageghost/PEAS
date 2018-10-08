@@ -193,8 +193,7 @@ def generate_score_distributions_vector(input_vector, min_size, max_size,
     log_print('constructing null models for regions up to size {} ...'.format(max_size), 2)
 
     singleton_distribution = empdist.EmpiricalDistribution.from_data(data=input_vector,
-                                                                     bins=bins,
-                                                                     pseudocount=pseudocount)  # type: empdist.EmpiricalDistribution
+                                                                     bins=bins)  # type: empdist.EmpiricalDistribution
 
     score_func = constants.VECTOR_SCORE_FUNCS_BY_NAME[score_func_name]  # type: function
 

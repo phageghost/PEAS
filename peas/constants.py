@@ -1,6 +1,6 @@
+import numpy
 import empdist
 
-from peas.fitapproxdistros.constants import *
 from . import scoring
 
 MAX_PSCORE = 744.44007192138122
