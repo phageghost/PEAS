@@ -1,7 +1,7 @@
-import empdist
 import numpy
 import scipy.stats
 
+import empdist
 from peas.arrayfuncs import replace_nans_diagonal_means, compute_vector_trim_points, compute_matrix_trim_points, \
     create_diagonal_distance_matrix, create_data_masks
 from peas.utilities import log_print, gaussian_norm, validate_param
@@ -223,10 +223,10 @@ def generate_score_distributions_matrix(input_matrix,
     log_print('computing means of all diagonal square subsets of {} x {} matrix ...'.format(n, n), 2)
     region_scores = scoring.compute_mean_table_2d(input_matrix, start_diagonal=start_diagonal)
 
-    support_ranges = {}
-    for diag_idx in range(start_diagonal, max_size):
-        this_scores = numpy.diag(region_scores, diag_idx)
-        support_ranges[diag_idx + 1] = (this_scores.min(), this_scores.max())
+    # support_ranges = {}
+    # for diag_idx in range(start_diagonal, max_size):
+    #     this_scores = numpy.diag(region_scores, diag_idx)
+    #     support_ranges[diag_idx + 1] = (this_scores.min(), this_scores.max())
 
     # Automatic determination of number of shuffles needed to achieve p-value target based on region sizes.
     if num_shuffles == 'auto':
@@ -253,7 +253,7 @@ def generate_score_distributions_matrix(input_matrix,
                                                         start_diagonal=start_diagonal,
                                                         distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[
                                                             null_distribution_class],
-                                                        support_ranges=support_ranges,
+                                                        # support_ranges=support_ranges,
                                                         parameter_smoothing_method=parameter_smoothing_method,
                                                         parameter_smoothing_window_size=parameter_filter_strength)
 

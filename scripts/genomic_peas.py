@@ -116,7 +116,7 @@ def main():
                                                                  rip_norm=args.col_norm,
                                                                  znorm=args.z_transform,
                                                                  log_transform=args.log_transform,
-                                                                 pseudocount=args.pseudocount,                                                                 
+                                                                 pseudocount=args.pseudocount,
                                                                  tail=args.tail, min_score=args.min_score,
                                                                  pvalue=args.pvalue, fdr=args.fdr,
                                                                  min_size=args.min_size,
@@ -124,7 +124,7 @@ def main():
                                                                  output_filename=args.output,
                                                                  start_diagonal=args.ignore_sizes,
                                                                  parameter_smoothing_window_size=args.parameter_smoothing_size,
-                                                                 null_distribution_type=constants.DEFAULT_DISTRIBUTION,
+                                                                 null_distribution_type=constants.DEFAULT_NULL_DISTRIBUTION,
                                                                  random_seed=args.random_seed)
 
 

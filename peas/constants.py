@@ -1,6 +1,6 @@
-import empdist
 import numpy
 
+import empdist
 from . import scoring
 
 MAX_PSCORE = 744.44007192138122
@@ -31,10 +31,9 @@ MATRIX_SCORING_FUNCS_BY_NAME = {'sum': scoring.compute_sum_table_2d,
                                 'max': scoring.compute_max_table_2d}
 DEFAULT_SCORE_FUNC = 'mean'
 NULL_DISTRIBUTIONS_BY_NAME = {'hybrid': empdist.HybridDistribution}
-DEFAULT_DISTRIBUTION = 'hybrid'
+DEFAULT_NULL_DISTRIBUTION = 'hybrid'
 DEFAULT_PARAMETER_SMOOTHING_METHOD = 'savgol'
-DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE = 5
-DEFAULT_NULL_DISTRIBUTION = 'pw_powersum'
+DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE = 0
 DEFAULT_MAXIMIZATION_TARGET = 'p_prod'
 DEFAULT_START_DIAGONAL = 1
 USE_C = True

@@ -1,9 +1,9 @@
 import datetime
 
-import empdist.constants
 import numpy
-from empdist.helper_funcs import fit_distros
 
+import empdist.constants
+from empdist.helper_funcs import fit_distros
 from peas.arrayfuncs import shuffle_matrix, my_diag_indices
 from peas.utilities import log_print
 from . import constants
@@ -65,8 +65,10 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
     return sampled_scores
 
 
-def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagonal,
-                      distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[constants.DEFAULT_DISTRIBUTION],
+def fit_distributions(sampled_scores,
+                      # support_ranges,
+                      matrix_size, start_diagonal,
+                      distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[constants.DEFAULT_NULL_DISTRIBUTION],
                       parameter_smoothing_method=empdist.constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
                       parameter_smoothing_window_size=empdist.constants.SAVGOL_DEFAULT_WINDOW_SIZE):
     """
@@ -78,7 +80,9 @@ def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagona
     log_print('fitting distributions of class {}'.format(distribution_class), 2)
     # sizes = sorted(sampled_scores.keys())
 
-    fit_params = fit_distros(sampled_scores, support_ranges=support_ranges, matrix_size=matrix_size,
+    fit_params = fit_distros(sampled_scores,
+                             # support_ranges=support_ranges,
+                             matrix_size=matrix_size,
                              start_diagonal=start_diagonal, distribution_class=distribution_class,
                              parameter_smoothing_window_size=parameter_smoothing_window_size)
 
