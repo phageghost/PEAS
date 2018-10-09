@@ -219,8 +219,6 @@ def generate_score_distributions_matrix(input_matrix,
     validate_param('score_func', score_func_name, constants.MATRIX_SCORING_FUNCS_BY_NAME.keys())
     validate_param('null_distribution_class', null_distribution_class, constants.NULL_DISTRIBUTIONS_BY_NAME.keys())
     n = input_matrix.shape[0]
-    # if not tail: tail = 'right' # ToDo: Adapt code to fit logsf to allow 'left' and 'both' values.
-    assert tail == 'right'
 
     log_print('computing means of all diagonal square subsets of {} x {} matrix ...'.format(n, n), 2)
     region_scores = scoring.compute_mean_table_2d(input_matrix, start_diagonal=start_diagonal)

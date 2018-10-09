@@ -66,7 +66,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
 
 
 def fit_distributions(sampled_scores, support_ranges, matrix_size, start_diagonal,
-                      distribution_class=empdist.constants.DEFAULT_DISTRO_CLASS,
+                      distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[constants.DEFAULT_DISTRIBUTION],
                       parameter_smoothing_method=empdist.constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
                       parameter_smoothing_window_size=empdist.constants.SAVGOL_DEFAULT_WINDOW_SIZE):
     """

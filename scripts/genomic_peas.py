@@ -33,7 +33,7 @@ def parse_and_validate_columns(col_param_string, mode):
 
 # ToDo: Replace hard-coded defaults with imported constants     
 def main():
-    parser = argparse.ArgumentParser(prog='peas')
+    parser = argparse.ArgumentParser(prog='genomic_peas')
     parser.add_argument('mode', help='operate in vector or matrix mode', type=str, choices=('vector', 'matrix'))
     parser.add_argument('input_file', help='input file', type=str)
     parser.add_argument('input_file_type', help='whether the file is in BED format or HOMER format',
@@ -74,12 +74,12 @@ def main():
                                 help='region sizes less than or equal to this number will be ignored for computing scores. This is useful in cases like Hi-C data where adjacent bins may be super-correlated.',
                                 type=int, default=1)
     matrix_options.add_argument('--parameter-smoothing-size',
-                                help='size of window to consider when smoothing piecewise distribution parameters',
-                                type=str, default=5)
-    matrix_options.add_argument('--distribution-type',
-                                help='what type of piecewise distribution to fit to the permuted data',
-                                choices=constants.NULL_DISTRIBUTIONS_BY_NAME.keys(),
-                                default=constants.DEFAULT_NULL_DISTRIBUTION)
+                                help='size of window to consider when smoothing piecewise distribution parameters. If non-zero, will be rounded to nearest odd number.',
+                                type=int, default=0)
+#    matrix_options.add_argument('--distribution-type',
+#                                help='what type of piecewise distribution to fit to the permuted data',
+#                                choices=constants.NULL_DISTRIBUTIONS_BY_NAME.keys(),
+#                               default=constants.DEFAULT_NULL_DISTRIBUTION)
     matrix_options.add_argument('--random-seed', '-r',
                                 help='value to use to initialize psuedorandom number generator. If not specified a new seed will be chosen each time',
                                 type=float, default=None)
@@ -124,7 +124,7 @@ def main():
                                                                  output_filename=args.output,
                                                                  start_diagonal=args.ignore_sizes,
                                                                  parameter_smoothing_window_size=args.parameter_smoothing_size,
-                                                                 null_distribution_type=args.distribution_type,
+                                                                 null_distribution_type=constants.DEFAULT_DISTRIBUTION,
                                                                  random_seed=args.random_seed)
 
 

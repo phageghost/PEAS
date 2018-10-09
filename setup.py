@@ -3,7 +3,7 @@ import setuptools
 from Cython.Build import cythonize
 from setuptools.extension import Extension
 
-VER = '0.1.14'
+VER = '0.2.0'
 AUTHOR = 'Dylan Skola'
 
 print('*' * 80)
@@ -36,7 +36,7 @@ setuptools.setup(name='PEAS',
                  ext_modules=extensions,
                  include_dirs=[numpy.get_include()],
                  install_requires=['numpy', 'datetime', 'scipy', 'statsmodels', 'pandas', 'matplotlib', 'seaborn',
-                                   'empdist'],
+                                   'empdist>=0.2'],
                  zip_safe=False,
                  classifiers=(
                              "Programming Language :: Python :: 3",
