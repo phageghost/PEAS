@@ -1,6 +1,6 @@
 import numpy
 
-from peas.utilities import log_print
+from empdist.utilities import log_print
 
 
 def find_maximal_path(edge_weights, row_masks, col_masks, gobig=True):

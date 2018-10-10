@@ -2,7 +2,7 @@ import numpy
 import pandas
 from statsmodels.stats.multitest import multipletests
 
-from peas.utilities import log_print
+from empdist.utilities import log_print
 from . import constants
 from . import interface
 

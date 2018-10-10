@@ -2,9 +2,9 @@ import numpy
 import scipy.stats
 
 import empdist
+from empdist.utilities import log_print, gaussian_norm, validate_param
 from peas.arrayfuncs import replace_nans_diagonal_means, compute_vector_trim_points, compute_matrix_trim_points, \
     create_diagonal_distance_matrix, create_data_masks
-from peas.utilities import log_print, gaussian_norm, validate_param
 from . import choosing
 from . import constants
 from . import region_stats
