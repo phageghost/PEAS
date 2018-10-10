@@ -213,7 +213,7 @@ def find_genomic_region_crds_matrix(peak_filename, peak_file_format, feature_col
                                                          quantile_normalize=False,
                                                          edge_weight_power=alpha,
                                                          pvalue_target=constants.DEFAULT_PVALUE_TARGET,
-                                                         max_pvalue_cv=constants.DEFAULT_PVALUE_CV,
+                                                         max_pvalue_cv=constants.DEFAULT_MAX_PVALUE_CV,
                                                          num_shuffles='auto',
                                                          null_distribution_class=null_distribution_type,
                                                          start_diagonal=start_diagonal,

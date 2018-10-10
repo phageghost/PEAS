@@ -1,9 +1,14 @@
 import datetime
 
 import numpy
+import pandas
+from scipy.signal import savgol_filter
+from scipy.special._ufuncs import binom
 
 import empdist.constants
-from empdist.helper_funcs import fit_distros
+from empdist import constants
+from empdist.helper_funcs import compute_expected_unique_samples
+from empdist.utilities import force_odd, log_print
 from peas.arrayfuncs import shuffle_matrix, my_diag_indices
 from peas.utilities import log_print
 from . import constants
@@ -204,3 +209,50 @@ def convert_pvals_to_pscores(pvals):
 
 def convert_pscores_to_pvals(pscores):
     return numpy.exp(-pscores)
+
+
+def smooth_parameters(param_dict, parameter_smoothing_window_size=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE):
+    # ToDo: Refactor for elegance
+    if len(param_dict) >= 3:
+        if parameter_smoothing_window_size:
+            parameter_smoothing_window_size = max(force_odd(int(parameter_smoothing_window_size)), 3)
+            log_print(
+                'smoothing parameters with Savitsky-Golay filter of size {}'.format(parameter_smoothing_window_size), 3)
+            param_df = pandas.DataFrame(param_dict).T  # ToDo: refactor to remove pandas dependency here.
+            param_array = savgol_filter(param_df, parameter_smoothing_window_size, 1, axis=0)
+            param_dict = {region_size: params for region_size, params in
+                          zip(sorted(param_dict.keys()), param_array.tolist())}
+    else:
+        log_print('Too few region sizes to perform parameter smoothing (need at least 3)', 3)
+
+    return param_dict
+
+
+def fit_distros(shuffled_samples, distribution_class,
+                support_ranges,
+                matrix_size,
+                start_diagonal=1,
+                max_pvalue_cv=constants.DEFAULT_MAX_PVALUE_CV,
+                parameter_smoothing_method=None,
+                parameter_smoothing_window_size=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE, fit_kwargs={}):
+    """
+    Given a dictionary of permuted data vectors, return a dictionary of optimal parameters
+    (as tuples) for distributions of class :param:`distro_class`.
+    """
+    region_sizes = sorted(shuffled_samples.keys())
+
+    fit_params = {}
+    for region_size in region_sizes:
+        # log_print('size {}, min score: {}, mean score: {}, max score: {}'.format(region_size, sampled_scores[region_size].min(), sampled_scores[region_size].mean(), sampled_scores[region_size].max()),3)
+        universe_size = binom(matrix_size, region_size - start_diagonal + 1)
+        num_unique_samples = compute_expected_unique_samples(total_items=universe_size,
+                                                             num_samples=len(shuffled_samples[region_size]))
+        # ToDo: settle on hybrid distribution only, fit only the necesssaryt tails, and instead of reporting meaningless fit params, report fit successes
+        this_fit_params = distribution_class.fit(shuffled_samples[region_size],
+                                                 unique_samples=num_unique_samples,
+                                                 support_range=support_ranges[region_size],
+                                                 max_pvalue_cv=max_pvalue_cv, **fit_kwargs)
+        fit_params[region_size] = this_fit_params
+        log_print('region size: {}, fit parameters: {}'.format(region_size, this_fit_params), 3)
+
+    return smooth_parameters(fit_params, parameter_smoothing_window_size=parameter_smoothing_window_size)
