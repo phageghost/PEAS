@@ -265,8 +265,7 @@ def fit_distros(shuffled_samples,
                                                               #                                                support_range=support_ranges[region_size],
                                                               max_pvalue_cv=max_pvalue_cv, **fit_kwargs,
                                                               log_message_indentation=4)
-        if
-            fit_params[region_size] = this_fit_results.params
+        fit_params[region_size] = this_fit_results.params
         log_print('fitting null distribution to region size: {} ...'.format(region_size), 3)
 
     return smooth_parameters(fit_params, parameter_smoothing_method=parameter_smoothing_method,
