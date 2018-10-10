@@ -39,9 +39,11 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
                       range(min_region_size, max_region_size + 1)}
 
     last_time = datetime.datetime(1950, 1, 1)
+
     for shuffle_idx in range(num_shuffles):
         cur_time = datetime.datetime.now()
         elapsed_seconds = (cur_time - last_time).total_seconds()
+
         if elapsed_seconds > MIN_REPORTING_TIME:
             log_print('permutation {} of {}'.format(shuffle_idx + 1, num_shuffles), 3)
             last_time = cur_time
