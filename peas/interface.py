@@ -113,8 +113,8 @@ def find_peas_matrix(input_matrix,
 
     print('{} nans in trimmed matrix'.format(numpy.isnan(trimmed_matrix).sum().sum()))
 
-    trimmed_matrix = replace_nans_diagonal_means(trimmed_matrix, start_diagonal=start_diagonal,
-                                                 end_diagonal=n)  # ToDo: Handle unsquare trimming results
+    trimmed_matrix = replace_nans_diagonal_means(trimmed_matrix, start_diagonal=-(n - 1),
+                                                 end_diagonal=n - 1)  # ToDo: Handle unsquare trimming results
 
     if quantile_normalize:
         log_print('quantile-normalizing matrix to standard Gaussian ...', 2)
