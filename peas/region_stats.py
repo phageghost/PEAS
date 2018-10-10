@@ -57,6 +57,8 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
                                                                          start_diagonal=start_diagonal,
                                                                          end_diagonal=max_region_size,
                                                                          random_seed=integer_seed + shuffle_idx)
+            print('{} nans in matrix'.format(numpy.isnan(matrix).sum().sum()))
+            print('{} nans in shuffled matrix'.format(numpy.isnan(scores).sum().sum()))
 
         else:
             matrix = shuffle_matrix(matrix)
@@ -76,8 +78,8 @@ def fit_distributions(sampled_scores,
                       # support_ranges,
                       matrix_size, start_diagonal,
                       distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[constants.DEFAULT_NULL_DISTRIBUTION],
-                      parameter_smoothing_method=empdist.constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
-                      parameter_smoothing_window_size=empdist.constants.SAVGOL_DEFAULT_WINDOW_SIZE):
+                      parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
+                      parameter_smoothing_window_size=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE):
     """
     Given a matrix of values, returns a dictionary, keyed by region size, of
     empirical distribution objects representing samples of scores of regions
@@ -231,7 +233,7 @@ def smooth_parameters(param_dict, parameter_smoothing_window_size=constants.DEFA
 
 
 def fit_distros(shuffled_samples, distribution_class,
-                support_ranges,
+#                support_ranges,
                 matrix_size,
                 start_diagonal=1,
                 max_pvalue_cv=constants.DEFAULT_MAX_PVALUE_CV,
@@ -252,7 +254,7 @@ def fit_distros(shuffled_samples, distribution_class,
         # ToDo: settle on hybrid distribution only, fit only the necesssaryt tails, and instead of reporting meaningless fit params, report fit successes
         this_fit_params = distribution_class.fit(shuffled_samples[region_size],
                                                  unique_samples=num_unique_samples,
-                                                 support_range=support_ranges[region_size],
+ #                                                support_range=support_ranges[region_size],
                                                  max_pvalue_cv=max_pvalue_cv, **fit_kwargs)
         fit_params[region_size] = this_fit_params
         log_print('region size: {}, fit parameters: {}'.format(region_size, this_fit_params), 3)
