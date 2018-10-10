@@ -91,7 +91,7 @@ def find_peas_matrix(input_matrix,
                      random_seed=None,
                      gobig=True):
     assert input_matrix.shape[0] == input_matrix.shape[1], 'input matrix must be square.'
-    print('{} nans in input matrix'.format(numpy.isnan(input_matrix).sum().sum()))
+    # print('{} nans in input matrix'.format(numpy.isnan(input_matrix).sum().sum()))
 
     trimmed_matrix, row_start_trim_point, row_end_trim_point, col_start_trim_point, col_end_trim_point = trim_data_matrix(
         input_matrix)
@@ -111,8 +111,8 @@ def find_peas_matrix(input_matrix,
     assert max_size >= min_size
     assert start_diagonal < min_size
 
-    print('{} nans in trimmed matrix'.format(numpy.isnan(trimmed_matrix).sum().sum()))
-
+    # print('{} nans in trimmed matrix'.format(numpy.isnan(trimmed_matrix).sum().sum()))
+    log_print('replacing NaNs in the matrix with the mean of their diagonal ...', 2)
     trimmed_matrix = replace_nans_diagonal_means(trimmed_matrix, start_diagonal=-(n - 1),
                                                  end_diagonal=n - 1)  # ToDo: Handle unsquare trimming results
 
@@ -120,7 +120,7 @@ def find_peas_matrix(input_matrix,
         log_print('quantile-normalizing matrix to standard Gaussian ...', 2)
         trimmed_matrix = gaussian_norm(trimmed_matrix.flatten()).reshape((n, n))
 
-    print('{} nans in trimmed matrix'.format(numpy.isnan(trimmed_matrix).sum().sum()))
+    # print('{} nans in trimmed matrix'.format(numpy.isnan(trimmed_matrix).sum().sum()))
 
     region_scores, null_distributions = generate_score_distributions_matrix(input_matrix=trimmed_matrix,
                                                                             min_size=min_size, max_size=max_size,
@@ -225,7 +225,9 @@ def generate_score_distributions_matrix(input_matrix,
     validate_param('null_distribution_class', null_distribution_class, constants.NULL_DISTRIBUTIONS_BY_NAME.keys())
     n = input_matrix.shape[0]
 
-    log_print('computing means of all diagonal square subsets of {} x {} matrix ...'.format(n, n), 2)
+    log_print(
+        'computing means of all diagonal square subsets of {} x {} matrix, excluding regions smaller than {} ...'.format(
+            n, n, start_diagonal + 1), 2)
     region_scores = scoring.compute_mean_table_2d(input_matrix, start_diagonal=start_diagonal)
 
     # support_ranges = {}
@@ -243,8 +245,8 @@ def generate_score_distributions_matrix(input_matrix,
         'constructing null models for regions up to size {} using {} permutations ...'.format(max_size,
                                                                                               num_shuffles), 2)
 
-    print('{} nans in input matrix'.format(numpy.isnan(input_matrix).sum().sum()))
-    print('{} nans in region scores'.format(numpy.isnan(region_scores).sum().sum()))
+    # print('{} nans in input matrix'.format(numpy.isnan(input_matrix).sum().sum()))
+    # print('{} nans in region scores'.format(numpy.isnan(region_scores).sum().sum()))
 
 
     shuffled_samples = region_stats.generate_permuted_matrix_scores(matrix=input_matrix,

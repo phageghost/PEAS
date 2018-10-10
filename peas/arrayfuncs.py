@@ -92,7 +92,6 @@ def replace_nans_diagonal_means(matrix, start_diagonal=0, end_diagonal=0):
         diag_mean = diag_vector[good_locs].mean()
         diag_vector[bad_locs] = diag_mean
         filled_matrix[diag_indices] = diag_vector
-        # assert numpy.isnan(filled_matrix[diag_indices]).sum() == 0
 
     return filled_matrix
 

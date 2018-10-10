@@ -5,7 +5,6 @@ import pandas
 from scipy.signal import savgol_filter
 from scipy.special._ufuncs import binom
 
-import empdist.constants
 from empdist import constants
 from empdist.helper_funcs import compute_expected_unique_samples
 from empdist.utilities import force_odd, log_print
@@ -57,8 +56,8 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
                                                                          start_diagonal=start_diagonal,
                                                                          end_diagonal=max_region_size,
                                                                          random_seed=integer_seed + shuffle_idx)
-            print('{} nans in matrix'.format(numpy.isnan(matrix).sum().sum()))
-            print('{} nans in shuffled matrix'.format(numpy.isnan(scores).sum().sum()))
+            # print('{} nans in matrix'.format(numpy.isnan(matrix).sum().sum()))
+            # print('{} nans in shuffled matrix'.format(numpy.isnan(scores).sum().sum()))
 
         else:
             matrix = shuffle_matrix(matrix)
