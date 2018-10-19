@@ -230,10 +230,10 @@ def generate_score_distributions_matrix(input_matrix,
             n, n, start_diagonal + 1), 2)
     region_scores = scoring.compute_mean_table_2d(input_matrix, start_diagonal=start_diagonal)
 
-    # support_ranges = {}
-    # for diag_idx in range(start_diagonal, max_size):
-    #     this_scores = numpy.diag(region_scores, diag_idx)
-    #     support_ranges[diag_idx + 1] = (this_scores.min(), this_scores.max())
+    support_ranges = {}
+    for diag_idx in range(start_diagonal, max_size):
+        this_scores = numpy.diag(region_scores, diag_idx)
+        support_ranges[diag_idx + 1] = (this_scores.min(), this_scores.max())
 
     # Automatic determination of number of shuffles needed to achieve p-value target based on region sizes.
     if num_shuffles == 'auto':
@@ -264,7 +264,7 @@ def generate_score_distributions_matrix(input_matrix,
                                                         start_diagonal=start_diagonal,
                                                         distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[
                                                             null_distribution_class],
-                                                        # support_ranges=support_ranges,
+                                                        support_ranges=support_ranges,
                                                         parameter_smoothing_method=parameter_smoothing_method,
                                                         parameter_smoothing_window_size=parameter_filter_strength)
 

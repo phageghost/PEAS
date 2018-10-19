@@ -74,7 +74,7 @@ def generate_permuted_matrix_scores(matrix, num_shuffles, min_region_size=2, max
 
 
 def fit_distributions(sampled_scores,
-                      # support_ranges,
+                      support_ranges,
                       matrix_size, start_diagonal,
                       distribution_class=constants.NULL_DISTRIBUTIONS_BY_NAME[constants.DEFAULT_NULL_DISTRIBUTION],
                       parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
@@ -89,7 +89,7 @@ def fit_distributions(sampled_scores,
     # sizes = sorted(sampled_scores.keys())
 
     fit_params = fit_distros(sampled_scores,
-                             # support_ranges=support_ranges,
+                             support_ranges=support_ranges,
                              matrix_size=matrix_size,
                              start_diagonal=start_diagonal, distribution_class=distribution_class,
                              parameter_smoothing_method=parameter_smoothing_method,
@@ -237,7 +237,7 @@ def smooth_parameters(param_dict, parameter_smoothing_method=constants.DEFAULT_P
 
 def fit_distros(shuffled_samples,
                 distribution_class,
-                #                support_ranges,
+                support_ranges,
                 matrix_size,
                 start_diagonal=1,
                 max_pvalue_cv=constants.DEFAULT_MAX_PVALUE_CV,
@@ -262,10 +262,10 @@ def fit_distros(shuffled_samples,
         # ToDo: settle on hybrid distribution only, fit only the necesssary tails
         this_fit_results = distribution_class.informative_fit(shuffled_samples[region_size],
                                                               unique_samples=num_unique_samples,
-                                                              #                                                support_range=support_ranges[region_size],
+                                                              support_range=support_ranges[region_size],
                                                               max_pvalue_cv=max_pvalue_cv, **fit_kwargs,
                                                               log_message_indentation=4)
-        fit_params[region_size] = this_fit_results.params
+        fit_params[region_size] = this_fit_results['params']
         log_print('fitting null distribution to region size: {} ...'.format(region_size), 3)
 
     return smooth_parameters(fit_params, parameter_smoothing_method=parameter_smoothing_method,
