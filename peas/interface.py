@@ -185,6 +185,7 @@ def trim_data_matrix(input_matrix):
     return trimmed_matrix, row_start_trim_point, row_end_trim_point, col_start_trim_point, col_end_trim_point
 
 
+# ToDO: move to region_stats    
 def generate_score_distributions_vector(input_vector, min_size, max_size,
                                         bins=constants.DEFAULT_BINS,
                                         score_func_name='mean',

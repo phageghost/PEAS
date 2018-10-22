@@ -108,20 +108,11 @@ def compute_pscores(region_scores, null_distributions, tail):
     min_size = min(null_distributions.keys())
     max_size = max(null_distributions.keys())
 
-    if len(region_scores.shape) == 1:  # ToDo: Do logsf with flexible tails to avoid this hackiness
-        region_pvals = compute_pvalues_matrix(data_matrix=region_scores,
-                                              distro_dict=null_distributions,
-                                              diagonal_start=min_size - 1,
-                                              diagonal_end=max_size,
-                                              tail=tail)
-        pval_scores = -numpy.log(numpy.maximum(region_pvals, constants.MIN_PVALUE))
-
-    else:
-        pval_scores = compute_pscores_matrix(data_matrix=region_scores,
-                                             distro_dict=null_distributions,
-                                             diagonal_start=min_size - 1,
-                                             diagonal_end=max_size,
-                                             tail=tail)
+    pval_scores = compute_pscores_matrix(data_matrix=region_scores,
+                                         distro_dict=null_distributions,
+                                         diagonal_start=min_size - 1,
+                                         diagonal_end=max_size,
+                                         tail=tail)
 
     return pval_scores
 
@@ -259,14 +250,13 @@ def fit_distros(shuffled_samples,
         num_unique_samples = compute_expected_unique_samples(total_items=universe_size,
                                                              num_samples=len(shuffled_samples[region_size]))
 
-        # ToDo: settle on hybrid distribution only, fit only the necesssary tails
+        # ToDo: fit only the necessary tails
         this_fit_results = distribution_class.informative_fit(shuffled_samples[region_size],
                                                               unique_samples=num_unique_samples,
                                                               support_range=support_ranges[region_size],
                                                               max_pvalue_cv=max_pvalue_cv, **fit_kwargs,
                                                               log_message_indentation=4)
         fit_params[region_size] = this_fit_results['params']
-        log_print('fitting null distribution to region size: {} ...'.format(region_size), 3)
 
     return smooth_parameters(fit_params, parameter_smoothing_method=parameter_smoothing_method,
                              parameter_smoothing_window_size=parameter_smoothing_window_size)
