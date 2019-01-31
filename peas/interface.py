@@ -36,7 +36,9 @@ def find_peas_vector(input_vector, min_score=constants.DEFAULT_MIN_SCORE, max_pv
                      bins=constants.DEFAULT_BINS,
                      quantile_normalize=False,
                      edge_weight_power=constants.DEFAULT_ALPHA,
-                     gobig=True):
+                     gobig=True,
+                     fdr_correct=True):
+                     
     input_vector, trim_start, trim_end = trim_data_vector(
         input_vector)  # ToDo: Move this upstream so we can decide on whether to process based on trimming results.
     n = len(input_vector)
@@ -89,7 +91,8 @@ def find_peas_matrix(input_matrix,
                      parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
                      parameter_filter_strength=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE,
                      random_seed=None,
-                     gobig=True):
+                     gobig=True,
+                     fdr_correct=True):
     assert input_matrix.shape[0] == input_matrix.shape[1], 'input matrix must be square.'
     # print('{} nans in input matrix'.format(numpy.isnan(input_matrix).sum().sum()))
 
@@ -142,14 +145,23 @@ def find_peas_matrix(input_matrix,
                             min_score=min_score,
                             max_pval=max_pval,
                             edge_weight_power=edge_weight_power,
-                            gobig=gobig)
+                            gobig=gobig,
+                            fdr_correct=fdr_correct)
 
 
 def find_peas_common(region_scores, null_distributions, trim_start, tail, maximization_target, min_score, min_size,
-                     max_size, max_pval, edge_weight_power, gobig):
+                     max_size, max_pval, edge_weight_power, gobig, fdr_correct=True):
     pscores = region_stats.compute_pscores(region_scores=region_scores, null_distributions=null_distributions,
                                            tail=tail)
+                                           
     pvals = region_stats.convert_pscores_to_pvals(pscores=pscores)
+    
+    if frd_correct:
+        log_print('Performing FDR adjustment of all region p-values...', 2)
+        pvals = region_stats.compute_fdr_matrix(pvals, start_diagonal=min_size-1, end_diagonal=max_size-1, method=constants.DEFAULT_FDR_METHOD):
+        pscores = region_stats.convert_pvals_to_pscores(pvals=pvals)
+    
+    
     row_masks, col_masks = generate_region_masks(region_scores=region_scores, pval_scores=pscores, min_size=min_size,
                                                  max_size=max_size,
                                                  min_score=min_score, max_pval=max_pval)

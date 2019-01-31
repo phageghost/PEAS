@@ -3,6 +3,7 @@ import datetime
 import numpy
 import pandas
 from scipy.signal import savgol_filter
+from statsmodels.stats.multitest import multipletests
 from scipy.special._ufuncs import binom
 
 from empdist import constants
@@ -204,6 +205,17 @@ def convert_pvals_to_pscores(pvals):
 
 def convert_pscores_to_pvals(pscores):
     return numpy.exp(-pscores)
+    
+    
+def compute_fdr_matrix(pvalue_matrix, start_diagonal=1, end_diagonal=500, method=constants.DEFAULT_FDR_METHOD):
+    """
+    Given a matrix of p-values, return a matrix of corresponding FDR-adjusted p-values
+    using the specified method.
+    """
+
+    flat_pvals = flatten_triu(pvalue_matrix, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
+    flat_pass, flat_qvals, _, _ = multipletests(flat_pvals, method=method)
+    return ravel_triu(flat_qvals, start_diagonal=start_diagonal, end_diagonal=end_diagonal)    
 
 
 def smooth_parameters(param_dict, parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
