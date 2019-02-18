@@ -37,7 +37,7 @@ def find_peas_vector(input_vector, min_score=constants.DEFAULT_MIN_SCORE, max_pv
                      quantile_normalize=False,
                      edge_weight_power=constants.DEFAULT_ALPHA,
                      gobig=True,
-                     fdr_correct=True):
+                     fdr_correct=constants.UPSTREAM_FDR_CORRECTION):
                      
     input_vector, trim_start, trim_end = trim_data_vector(
         input_vector)  # ToDo: Move this upstream so we can decide on whether to process based on trimming results.
@@ -92,7 +92,8 @@ def find_peas_matrix(input_matrix,
                      parameter_filter_strength=constants.DEFAULT_PARAMETER_SMOOTHING_WINDOW_SIZE,
                      random_seed=None,
                      gobig=True,
-                     fdr_correct=True):
+                     fdr_correct=constants.UPSTREAM_FDR_CORRECTION):
+                     
     assert input_matrix.shape[0] == input_matrix.shape[1], 'input matrix must be square.'
     # print('{} nans in input matrix'.format(numpy.isnan(input_matrix).sum().sum()))
 
@@ -156,9 +157,9 @@ def find_peas_common(region_scores, null_distributions, trim_start, tail, maximi
                                            
     pvals = region_stats.convert_pscores_to_pvals(pscores=pscores)
     
-    if frd_correct:
+    if fdr_correct:
         log_print('Performing FDR adjustment of all region p-values...', 2)
-        pvals = region_stats.compute_fdr_matrix(pvals, start_diagonal=min_size-1, end_diagonal=max_size-1, method=constants.DEFAULT_FDR_METHOD):
+        pvals = region_stats.compute_fdr_matrix(pvals, start_diagonal=min_size-1, end_diagonal=max_size-1, method=constants.DEFAULT_FDR_METHOD)
         pscores = region_stats.convert_pvals_to_pscores(pvals=pvals)
     
     

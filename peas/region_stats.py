@@ -10,7 +10,7 @@ from empdist import constants
 from empdist.helper_funcs import compute_expected_unique_samples
 from empdist.utilities import force_odd
 from empdist.utilities import log_print
-from peas.arrayfuncs import shuffle_matrix, my_diag_indices
+from peas.arrayfuncs import shuffle_matrix, my_diag_indices, flatten_triu, ravel_triu
 from . import constants
 from . import scoring
 from . import scoring_funcs_cython

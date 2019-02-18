@@ -71,7 +71,7 @@ def ravel_triu(arr, start_diagonal, end_diagonal, empty_fill_value=0):
     for diagonal in range(start_diagonal, end_diagonal + 1):
         diagonal_length = n - diagonal
 
-        triu_matrix[peas.arrayfuncs.my_diag_indices(n, diagonal)] = arr[flat_array_idx:flat_array_idx+diagonal_length]
+        triu_matrix[my_diag_indices(n, diagonal)] = arr[flat_array_idx:flat_array_idx+diagonal_length]
         flat_array_idx += diagonal_length
     
     return triu_matrix
