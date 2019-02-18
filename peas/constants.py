@@ -14,13 +14,15 @@ DEFAULT_MAX_SIZE = 500
 DEFAULT_MAX_SIZE_FACTOR = 4
 DEFAULT_MIN_SCORE = 0
 DEFAULT_PVALUE_THRESHOLD = 1e-3
+DEFAULT_FDR_METHOD = 'fdr_bh'
 DEFAULT_FDR_THRESHOLD = 0.05
+UPSTREAM_FDR_CORRECTION = True
 DEFAULT_RIP_NORM = True
 DEFAULT_ZNORM = False
 DEFAULT_LOG_TRANSFORM = True
 DEFAULT_TAIL = 'both'
 DEFAULT_ALPHA = 2
-DEFAULT_BINS = 'auto'
+DEFAULT_BINS = 200
 VECTOR_SCORE_FUNCS_BY_NAME = {'mean': empdist.helper_funcs.predict_distributions_independent_means,
                               'sum': empdist.helper_funcs.predict_distributions_independent_sums,
                               'min': empdist.helper_funcs.predict_distributions_independent_mins,

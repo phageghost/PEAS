@@ -3,13 +3,14 @@ import datetime
 import numpy
 import pandas
 from scipy.signal import savgol_filter
+from statsmodels.stats.multitest import multipletests
 from scipy.special._ufuncs import binom
 
 from empdist import constants
 from empdist.helper_funcs import compute_expected_unique_samples
 from empdist.utilities import force_odd
 from empdist.utilities import log_print
-from peas.arrayfuncs import shuffle_matrix, my_diag_indices
+from peas.arrayfuncs import shuffle_matrix, my_diag_indices, flatten_triu, ravel_triu
 from . import constants
 from . import scoring
 from . import scoring_funcs_cython
@@ -204,6 +205,17 @@ def convert_pvals_to_pscores(pvals):
 
 def convert_pscores_to_pvals(pscores):
     return numpy.exp(-pscores)
+    
+    
+def compute_fdr_matrix(pvalue_matrix, start_diagonal=1, end_diagonal=500, method=constants.DEFAULT_FDR_METHOD):
+    """
+    Given a matrix of p-values, return a matrix of corresponding FDR-adjusted p-values
+    using the specified method.
+    """
+
+    flat_pvals = flatten_triu(pvalue_matrix, start_diagonal=start_diagonal, end_diagonal=end_diagonal)
+    flat_pass, flat_qvals, _, _ = multipletests(flat_pvals, method=method)
+    return ravel_triu(flat_qvals, start_diagonal=start_diagonal, end_diagonal=end_diagonal)    
 
 
 def smooth_parameters(param_dict, parameter_smoothing_method=constants.DEFAULT_PARAMETER_SMOOTHING_METHOD,
